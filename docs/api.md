@@ -182,7 +182,7 @@ Role rules: `view` → GET only (write calls return `403 forbidden`); `edit` →
 ## 13. WebSocket
 `GET ws://localhost:8000/ws/workspaces/{id}?share=<token optional>`
 
-The current owner-session implementation accepts connections without `share`. Supplying a share token closes with code `4403` until share links and role checks are implemented.
+Owner-session connections work without `share`. A valid, unexpired workspace share token (`view` or `edit`) also permits a connection; invalid, revoked, expired, or cross-workspace tokens close with code `4403`.
 
 Envelope: `{"type":"page.processing_completed","workspace_id":"w_1","seq":43,"ts":"...","data":{...}}`
 

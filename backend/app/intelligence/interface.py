@@ -29,3 +29,8 @@ def process_page(text: str, title: str, url: str) -> PageAnalysisResult:
 def compute_relationships(pages: list[Any], rejected_pairs: set[tuple[str, str]], params: Any) -> RelationshipResult:
     # Empty suggestions are valid until Member 4 supplies the real implementation.
     return RelationshipResult(candidate_edges=[], clusters=[])
+
+
+def embed_query(query: str) -> list[float] | None:
+    # Member 4 supplies the embedding implementation; no model runs in this stub.
+    return None

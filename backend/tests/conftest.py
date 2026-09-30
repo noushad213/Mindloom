@@ -34,7 +34,7 @@ def postgres_session_factory():
         with engine.begin() as connection:
             alembic_config.attributes["connection"] = connection
             command.upgrade(alembic_config, "head")
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0003_live_processing"
+            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_notes_tags_shares"
             assert connection.scalar(text("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector')"))
         factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
         yield factory

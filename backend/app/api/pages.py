@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.api.workspaces import require_workspace
 from app.db.session import get_db
-from app.models import Page, ProcessingJob, TabSession
+from app.models import GroupMember, Page, ProcessingJob, TabSession, Tag, Tagging
 from app.schemas.pages import IngestPayload, IngestResponse, PageList, TabSessionList, TabSessionResponse, TabSessionUpdate
 from app.services.ingest import ingest_page
 from app.services.serialization import page_body, tab_body
+from app.services.graph import changed, delete_annotations
 from app.services.events import record_event
 
 
@@ -57,6 +58,8 @@ def list_pages(
     workspace_id: UUID,
     status: str | None = None,
     domain: str | None = None,
+    tag: str | None = None,
+    group_id: UUID | None = None,
     sort: str = "recent",
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -68,6 +71,11 @@ def list_pages(
         filters.append(Page.status == status)
     if domain:
         filters.append(Page.domain == domain)
+    if tag:
+        filters.append(Page.id.in_(select(Tagging.target_id).join(Tag, Tag.id == Tagging.tag_id).where(
+            Tag.workspace_id == workspace_id, Tagging.target_type == "page", func.lower(Tag.name) == tag.lower())))
+    if group_id:
+        filters.append(Page.id.in_(select(GroupMember.page_id).where(GroupMember.group_id == group_id)))
     if sort != "recent":
         raise HTTPException(status_code=422, detail="Unsupported sort value")
     total = db.scalar(select(func.count(Page.id)).where(*filters)) or 0
@@ -99,12 +107,14 @@ def get_workspace_page(workspace_id: UUID, page_id: UUID, include_text: bool = F
 
 
 @router.delete("/pages/{page_id}", status_code=204)
-def delete_page(page_id: UUID, db: Session = Depends(get_db)) -> Response:
+def delete_page(page_id: UUID, request: Request, background_tasks: BackgroundTasks,
+                db: Session = Depends(get_db)) -> Response:
     page = db.get(Page, page_id)
     if page is None:
         raise HTTPException(status_code=404, detail="Page not found")
+    delete_annotations(db, "page", page_id)
     db.delete(page)
-    db.commit()
+    changed(db, request, background_tasks, page.workspace_id, pages=[page_id])
     return Response(status_code=204)
 
 

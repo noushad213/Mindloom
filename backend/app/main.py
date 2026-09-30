@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -14,7 +14,13 @@ from app.db.session import get_db
 from app.db.session import SessionLocal
 from app.api.pages import router as pages_router
 from app.api.processing import router as processing_router
+from app.api.graph import router as graph_router
+from app.api.annotations import router as annotations_router
+from app.api.search import router as search_router
+from app.api.sharing import router as sharing_router
+from app.api.export import router as export_router
 from app.api.workspaces import router as workspaces_router
+from app.services.auth import edit_allowed, resource_workspace, valid_share
 from app.jobs.queue import JobQueue
 from app.ws.manager import ConnectionManager
 from app.ws.router import router as ws_router
@@ -37,7 +43,33 @@ app.state.ws_manager = ConnectionManager()
 app.include_router(workspaces_router)
 app.include_router(pages_router)
 app.include_router(processing_router)
+app.include_router(graph_router)
+app.include_router(annotations_router)
+app.include_router(search_router)
+app.include_router(sharing_router)
+app.include_router(export_router)
 app.include_router(ws_router)
+
+
+@app.middleware("http")
+async def shared_access(request: Request, call_next):
+    token = request.headers.get("X-Share-Token") or request.query_params.get("share")
+    if not token or not request.url.path.startswith("/api/v1/") or request.url.path.startswith("/api/v1/shared/"):
+        return await call_next(request)
+    factory = getattr(request.app.state, "session_factory", SessionLocal)
+    with factory() as db:
+        link = valid_share(db, token)
+        if link is None:
+            return error_response(403, "forbidden", "Invalid or expired share token")
+        target_workspace = resource_workspace(db, request.url.path)
+        if target_workspace is not None and target_workspace != link.workspace_id:
+            return error_response(404, "not_found", "Resource not found")
+        if request.method != "GET" and (link.role == "view" or not edit_allowed(request.method, request.url.path)):
+            return error_response(403, "forbidden", "Share token cannot perform this action")
+        if request.url.path == "/api/v1/workspaces":
+            request.state.shared_workspace_id = link.workspace_id
+        request.state.share_role = link.role
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -87,6 +119,11 @@ async def validation_error(_request: Request, exc: RequestValidationError) -> JS
     first = exc.errors()[0]
     field = ".".join(str(part) for part in first["loc"] if part != "body")
     return error_response(422, "validation_error", first["msg"], {"field": field})
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error(_request: Request, _exc: IntegrityError) -> JSONResponse:
+    return error_response(409, "conflict", "Resource conflicts with an existing record")
 
 
 @app.exception_handler(Exception)

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models import Workspace
+from app.services.auth import valid_share
 from app.services.events import envelope, latest_seq
 
 
@@ -17,8 +18,10 @@ async def workspace_socket(websocket: WebSocket, workspace_id: UUID, share: str 
     if db.get(Workspace, workspace_id) is None:
         await websocket.close(code=4404)
         return
-    if share is not None:
-        # Share tokens are introduced with share_links in a later phase.
+    if share is not None and (link := valid_share(db, share)) is None:
+        await websocket.close(code=4403)
+        return
+    if share is not None and link.workspace_id != workspace_id:
         await websocket.close(code=4403)
         return
     db.rollback()  # Do not hold a read transaction for the lifetime of the socket.
