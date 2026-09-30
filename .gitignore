@@ -1,2 +1,5 @@
 # Personal agent skills downloaded for this checkout
 /.agents/skills/
+**/.env
+**/__pycache__/
+**/.pytest_cache/

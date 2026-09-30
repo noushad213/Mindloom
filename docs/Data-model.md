@@ -67,6 +67,10 @@ Indexes: `(workspace_id, status)`, `(workspace_id, domain)`, generated `tsvector
 
 UNIQUE `(workspace_id, browser_tab_id, page_id)`. Closing a tab updates `state` only; the page is untouched. Multiple tab_sessions may reference one page.
 
+### ingest_events (internal retry receipts, Phase 3)
+
+`(workspace_id UUID FK → workspaces ON DELETE CASCADE, client_event_id UUID)` is the composite primary key. `response_body JSONB` and `status_code INTEGER` preserve the first successful ingest response. This table is internal to the backend; it adds no API fields. Reservation, page/tab upserts, and receipt storage happen in one transaction so a retry with the same event ID returns the original response.
+
 ### page_analysis
 | Column | Type | Notes |
 |---|---|---|
@@ -199,4 +203,6 @@ Manual edges: `evidence = null` (UI shows "Created by you").
 
 ## 5. Migrations
 
-Alembic from day one, run against the **direct** Supabase connection; the app uses the pooled connection. Initial migration creates all tables, the `tsvector` column and GIN index. Migration 0 runs `CREATE EXTENSION IF NOT EXISTS vector;` and creates the HNSW index on `page_analysis.embedding`.
+Alembic from day one, run against the **direct** Supabase connection; the app uses the pooled connection. The planned full schema includes all tables, the `tsvector` column and GIN index, and an HNSW index on `page_analysis.embedding`.
+
+Current implementation is phased: migration 0 runs `CREATE EXTENSION IF NOT EXISTS vector;`; migration 1 creates `workspaces`, `pages`, and `tab_sessions` with the page `tsvector`/GIN index; migration 2 adds internal `ingest_events`; migration 3 adds `page_analysis` with `vector(384)` and its cosine HNSW index, `edges`, `groups`, `group_members`, `processing_jobs`, and `event_log`. Notes, tags, shares, and generated graph merge logic remain for later phases.

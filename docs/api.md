@@ -96,6 +96,7 @@ TabSession: `{"id","page_id","browser_tab_id","state","active","opened_at","last
 |---|---|---|
 | List | `GET /workspaces/{id}/pages?status=&domain=&tag=&group_id=&sort=recent&limit=&offset=` | `200 {items:[Page],total,...}` |
 | Get (with text) | `GET /pages/{id}?include_text=true` | `200 Page` + `text` |
+| Get within workspace | `GET /workspaces/{id}/pages/{page_id}?include_text=true` | `200 Page` + optional `text`; `404` if the page belongs to another workspace |
 | Update (move, title, importance) | `PATCH /pages/{id}` `{"pos":{"x":1,"y":2},"title":"...","importance":4}` | `200 Page` |
 | Bulk move (drag end) | `PATCH /workspaces/{id}/pages/positions` `{"positions":[{"id":"p_1","x":1,"y":2}]}` | `200 {"updated":1}` |
 | Manually add by URL | `POST /workspaces/{id}/pages/manual` `{"url":"https://..."}` | `201 Page` (status `discovered`; backend fetches server-side via Trafilatura if reachable) |
@@ -180,6 +181,8 @@ Role rules: `view` → GET only (write calls return `403 forbidden`); `edit` →
 
 ## 13. WebSocket
 `GET ws://localhost:8000/ws/workspaces/{id}?share=<token optional>`
+
+The current owner-session implementation accepts connections without `share`. Supplying a share token closes with code `4403` until share links and role checks are implemented.
 
 Envelope: `{"type":"page.processing_completed","workspace_id":"w_1","seq":43,"ts":"...","data":{...}}`
 
