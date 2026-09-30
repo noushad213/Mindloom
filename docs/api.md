@@ -78,7 +78,7 @@ Workspace: `{"id","name","description","excluded_domains","settings","view_state
   "captured_at": "2026-10-01T10:00:00Z"
 }
 ```
-- `client_event_id` makes retries idempotent (same id → same response, no duplicate).
+- `client_event_id` makes retries idempotent (same id → same response body with `200`, no duplicate).
 - `extraction.status="failed"` → `text` may be empty; backend stores page with `status=extraction_failed` + `error_code`.
 - Limits: `text` ≤ 100,000 chars (server truncates to `MAX_TEXT_CHARS`), body ≤ 2 MB → else `413`.
 - Excluded domain → `422 excluded_domain`.

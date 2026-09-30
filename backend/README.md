@@ -17,3 +17,9 @@ Implemented routes cover workspace CRUD, graph snapshots, single-page ingest and
 `app/intelligence/interface.py` is deliberately a stub: it stores a visibly marked summary (`[Stub] ...`) and empty keywords, with no embedding or relationship suggestions. The `vector(384)` column and HNSW index are ready for Member 4's implementation. Search uses PostgreSQL full-text search now and adds vector neighbors when `embed_query` returns a 384-dimensional vector. Share links support `view` and `edit` roles on HTTP and WebSocket routes; owner connections without a token work.
 
 For database tests, run `python -m pytest` from the repository root. Tests use `MINDLOOM_TEST_DATABASE_URL` when set, otherwise `DATABASE_URL_DIRECT` from `backend/.env`. The database user must be able to create schemas and enable `vector`. Each database test migrates a randomly named schema through Alembic head and drops that schema afterward. A missing or unreachable database fails the suite instead of silently skipping it.
+
+## Live API journey
+
+With a migrated API server running in another terminal, run `python -u scripts/e2e_journey.py` from the repository root. Set `MINDLOOM_API_BASE_URL` to override `http://127.0.0.1:8000`; set `MINDLOOM_E2E_DATABASE_URL` if the server uses a database other than `DATABASE_URL_DIRECT`. The script streams every HTTP request/status and incoming WebSocket message to stdout. It seeds one suggested edge directly because the public edge API creates manual edges only, then removes its two temporary workspaces. Use `--keep-data` to inspect them afterward.
+
+To validate against a fresh database schema without changing the default schema or starting a server manually, run `python -u scripts/run_e2e_isolated.py`. This helper migrates a disposable schema, starts a temporary API server, streams the journey, and drops the schema afterward.

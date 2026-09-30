@@ -37,7 +37,7 @@ def ingest_page(db: Session, workspace_id: UUID, payload: IngestPayload) -> tupl
 
     prior = db.get(IngestEvent, (workspace_id, payload.client_event_id))
     if prior is not None:
-        return prior.status_code, prior.response_body, False
+        return 200, prior.response_body, False
 
     normalized = canonical_url(payload.url)
     domain = urlsplit(normalized).hostname or ""
@@ -53,7 +53,7 @@ def ingest_page(db: Session, workspace_id: UUID, payload: IngestPayload) -> tupl
     if reservation is None:
         prior = db.get(IngestEvent, (workspace_id, payload.client_event_id))
         assert prior is not None
-        return prior.status_code, prior.response_body, False
+        return 200, prior.response_body, False
 
     content, status, error_code, content_hash = prepare_content(payload, get_settings().max_text_chars)
     extraction_failed = status == "extraction_failed"

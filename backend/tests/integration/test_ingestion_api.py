@@ -63,7 +63,8 @@ async def test_i5_identical_event_response(api_client, ingest_payload):
     workspace_id = await create_workspace(api_client)
     first = await api_client.post(f"/api/v1/workspaces/{workspace_id}/pages", json=ingest_payload)
     second = await api_client.post(f"/api/v1/workspaces/{workspace_id}/pages", json=ingest_payload)
-    assert first.status_code == second.status_code == 201
+    assert first.status_code == 201
+    assert second.status_code == 200
     assert first.json() == second.json()
     assert (await api_client.get(f"/api/v1/workspaces/{workspace_id}/pages")).json()["total"] == 1
 

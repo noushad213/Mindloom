@@ -31,7 +31,7 @@ def test_page_upsert_and_event_receipt(postgres_session_factory, ingest_payload)
     with postgres_session_factory() as db:
         first_hash = db.scalar(select(Page.content_hash))
     same_status, same = submit(ingest_payload)
-    assert (same_status, same) == (first_status, first)
+    assert same_status == 200 and same == first
 
     ingest_payload["client_event_id"] = uuid4()
     ingest_payload["url"] = "https://example.com/article?id=5&fbclid=other"
