@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PS2 Live Tab Tracker</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    li {
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tab-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .tab-url {
+      overflow-wrap: anywhere;
+      margin-bottom: 5px;
+    }
+
+    button {
+      margin-top: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+
+    #getGraphButton {
+      margin-top: 25px;
+      padding: 12px 22px;
+      font-size: 16px;
+    }
+
+    #contentResults {
+      margin-top: 30px;
+    }
+
+    .result {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #ccc;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #f5f5f5;
+      padding: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>PS2 Live Tab Tracker</h1>
+
+  <p id="status">Not connected</p>
+
+  <h2>Available tabs</h2>
+
+  <p>
+    Remove any tabs you do not want included in this research session.
+    Removing a tab here does not close it in Chrome.
+  </p>
+
+  <ul id="tabList"></ul>
+
+  <button id="getGraphButton">Get Graph</button>
+
+  <p id="extractStatus"></p>
+
+  <section id="contentResults">
+    <h2>Extracted page content</h2>
+    <div id="resultsList"></div>
+  </section>
+
+  <script>
+    // Replace this with your actual extension ID.
+    const extensionId = "";
+
+    const status = document.getElementById("status");
+    const tabList = document.getElementById("tabList");
+    const getGraphButton = document.getElementById("getGraphButton");
+    const extractStatus = document.getElementById("extractStatus");
+    const resultsList = document.getElementById("resultsList");
+
+    // Tabs currently included in this research session.
+    const tabs = new Map();
+
+    // Tabs manually removed from this research session.
+    const excludedTabs = new Set();
+
+    let port = null;
+    let reconnectTimer = null;
+    let heartbeatTimer = null;
+
+    function renderTabs() {
+      tabList.innerHTML = "";
+
+      if (tabs.size === 0) {
+        const item = document.createElement("li");
+        item.textContent = "No trackable tabs open.";
+        tabList.appendChild(item);
+        return;
+      }
+
+      tabs.forEach(function (tab) {
+        const item = document.createElement("li");
+
+        const title = document.createElement("div");
+        title.className = "tab-title";
+        title.textContent = tab.title;
+
+        const url = document.createElement("div");
+        url.className = "tab-url";
+        url.textContent = tab.url;
+
+        const selected = document.createElement("div");
+        selected.textContent = tab.active
+          ? "Selected"
+          : "Not selected";
+
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "Remove";
+
+        removeButton.onclick = function () {
+          // Exclude this tab from the current research session.
+          excludedTabs.add(tab.id);
+          tabs.delete(tab.id);
+
+          renderTabs();
+          extractStatus.textContent =
+            "Tab removed from this research session.";
+        };
+
+        item.appendChild(title);
+        item.appendChild(url);
+        item.appendChild(selected);
+        item.appendChild(removeButton);
+
+        tabList.appendChild(item);
+      });
+    }
+
+    function connectToExtension() {
+      if (port) {
+        return;
+      }
+
+      try {
+        port = chrome.runtime.connect(extensionId, {
+          name: "PS2_TAB_TRACKER"
+        });
+
+        status.textContent = "Connected. Waiting for tabs...";
+
+        heartbeatTimer = setInterval(function () {
+          if (port) {
+            try {
+              port.postMessage({
+                action: "PING"
+              });
+            } catch (error) {
+              console.log("Heartbeat failed:", error);
+            }
+          }
+        }, 20000);
+
+        port.onMessage.addListener(function (message) {
+
+          if (message.action === "PONG") {
+            return;
+          }
+
+          if (message.action === "INITIAL_TABS") {
+            tabs.clear();
+
+            message.tabs.forEach(function (tab) {
+              if (!excludedTabs.has(tab.id)) {
+                tabs.set(tab.id, tab);
+              }
+            });
+
+            status.textContent =
+              "Connected. Tracking " + tabs.size + " tabs.";
+
+            renderTabs();
+          }
+
+          if (message.action === "TAB_ADDED") {
+            if (!excludedTabs.has(message.tab.id)) {
+              tabs.set(message.tab.id, message.tab);
+              renderTabs();
+            }
+          }
+
+          if (message.action === "TAB_UPDATED") {
+            if (!excludedTabs.has(message.tab.id)) {
+              tabs.set(message.tab.id, message.tab);
+              renderTabs();
+            }
+          }
+
+          if (message.action === "TAB_REMOVED") {
+            tabs.delete(message.tabId);
+            excludedTabs.delete(message.tabId);
+            renderTabs();
+          }
+
+          if (message.action === "CONTENT_RESULTS") {
+            displayContentResults(message.results);
+          }
+        });
+
+        port.onDisconnect.addListener(function () {
+          port = null;
+
+          if (heartbeatTimer) {
+            clearInterval(heartbeatTimer);
+            heartbeatTimer = null;
+          }
+
+          status.textContent = "Connection lost. Reconnecting...";
+
+          if (!reconnectTimer) {
+            reconnectTimer = setTimeout(function () {
+              reconnectTimer = null;
+              connectToExtension();
+            }, 1500);
+          }
+        });
+
+      } catch (error) {
+        port = null;
+        status.textContent = "Could not connect. Retrying...";
+
+        if (!reconnectTimer) {
+          reconnectTimer = setTimeout(function () {
+            reconnectTimer = null;
+            connectToExtension();
+          }, 1500);
+        }
+      }
+    }
+
+    // Ask the extension to extract content from the tabs
+    // that are still included in the research session.
+    getGraphButton.addEventListener("click", function () {
+      if (!port) {
+        extractStatus.textContent =
+          "Not connected to the extension. Please wait and try again.";
+        return;
+      }
+
+      if (tabs.size === 0) {
+        extractStatus.textContent =
+          "There are no tabs to extract.";
+        return;
+      }
+
+      const tabIds = Array.from(tabs.keys());
+
+      resultsList.innerHTML = "";
+      extractStatus.textContent =
+        "Extracting content from " + tabIds.length + " tabs...";
+
+      getGraphButton.disabled = true;
+
+      try {
+        port.postMessage({
+          action: "EXTRACT_TABS",
+          tabIds: tabIds
+        });
+      } catch (error) {
+        extractStatus.textContent =
+          "Could not request extraction. Check the extension connection.";
+        getGraphButton.disabled = false;
+      }
+    });
+
+    // Display the content returned by the extension.
+    function displayContentResults(results) {
+      resultsList.innerHTML = "";
+
+      let successfulCount = 0;
+
+      results.forEach(function (result) {
+        const card = document.createElement("div");
+        card.className = "result";
+
+        const heading = document.createElement("h3");
+        heading.textContent = result.title || "Untitled page";
+
+        const url = document.createElement("p");
+        url.textContent = result.url || "";
+
+        const content = document.createElement("pre");
+
+        if (result.success) {
+          successfulCount++;
+          content.textContent = result.content || "No text found.";
+        } else {
+          content.textContent =
+            "Could not extract this page: " + result.error;
+        }
+
+        card.appendChild(heading);
+        card.appendChild(url);
+        card.appendChild(content);
+
+        resultsList.appendChild(card);
+      });
+
+      extractStatus.textContent =
+        "Extraction finished. Successfully read " +
+        successfulCount + " of " + results.length + " tabs.";
+
+      getGraphButton.disabled = false;
+    }
+
+    connectToExtension();
+  </script>
+
+</body>
+</html>
