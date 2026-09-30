@@ -28,6 +28,29 @@ Each member owns tests and documentation for their area. Member 4 coordinates en
 
 Member 3 publishes the API schema and example payloads; Member 2 and Noushad validate them with a mocked page before building full integrations. Member 4 defines the suggested-edge fields with Member 3.
 
+## Agreed technology stack
+
+This is the default stack for the first vertical slice and the research workspace. Change it only through a team decision recorded in this file or an architecture decision record.
+
+| Area | Choice | Why it fits Mindloom |
+| --- | --- | --- |
+| Repository | pnpm workspaces monorepo | Keeps the dashboard, extension, and shared TypeScript contracts in one install while allowing the Python API to remain an independent app. |
+| Dashboard | React, TypeScript, and Vite | Fast setup, a large ecosystem, and shared types with the extension. |
+| Routing and API state | React Router and TanStack Query | Covers navigation, caching, retries, loading/error states, and refresh after ingestion without a custom data layer. |
+| Local UI state | React hooks first; Zustand only for graph-wide state | Avoids unnecessary global state while leaving a small, flexible option for graph interactions. |
+| Styling | CSS Modules with CSS custom-property design tokens | Simple to debug and flexible enough for a distinctive accessible interface without tying the design to a component framework. |
+| Graph editor | React Flow (`@xyflow/react`) | Provides draggable custom nodes, edges, zoom, selection, editing, save/restore patterns, and keyboard support under an MIT license. |
+| Browser extension | WXT, TypeScript, and Chrome Manifest V3 | Generates the manifest, handles extension entry points and service-worker builds, and preserves a path to Edge and Firefox later. |
+| Shared web contracts | TypeScript types generated from the backend OpenAPI schema | Keeps dashboard and extension payloads aligned with the API without maintaining duplicate hand-written models. |
+| Backend API | FastAPI and Pydantic | Matches the research plan, produces OpenAPI automatically, validates ingestion payloads, and supports WebSockets when live updates are added. |
+| Persistence | PostgreSQL, SQLAlchemy 2, Alembic, and psycopg | Handles relational workspace data, indexed JSONB metadata, and built-in full-text search without adding a second database. Use synchronous SQLAlchemy initially; move specific paths to async only if measurements justify it. |
+| Live updates | REST first, then one FastAPI WebSocket channel per workspace | Keeps the first vertical slice easy to test while providing a direct upgrade path for processing and graph-change events. |
+| Processing | Python modules inside the backend worker boundary | Reuses the backend language for extraction cleanup, similarity, clustering, and later ML libraries. Start with in-process background work; add a queue only when jobs outgrow it. |
+| Testing | Vitest and Testing Library for web code; pytest for Python; Playwright for the final cross-component path | Gives each owner focused tests and one browser-level proof of the extension-to-dashboard flow. |
+| Local development | Docker Compose for PostgreSQL only | Developers run dashboard, extension, and API with their native tools while sharing one reproducible database setup. |
+
+Do not add Redux, a separate search service, a graph database, Redis/Celery, Kubernetes, or a UI component suite for the first vertical slice. Add one only when a measured requirement cannot be met cleanly by the stack above.
+
 ## Milestones and handoffs
 
 ### 1. Working vertical slice
@@ -60,7 +83,7 @@ Member 3 publishes the API schema and example payloads; Member 2 and Noushad val
 
 ## Scope decisions to avoid blocking the first demo
 
-- Use the research document's React/Vite, FastAPI, Chrome MV3, and graph library suggestions as a starting point. Confirm database and deployment choices with the team after the vertical slice.
+- Use the agreed technology stack above. Defer production hosting until the vertical slice works locally; deployment must not change the API or persistence contracts.
 - Start with one-time extraction of eligible pages. Dynamic-page observation, PDFs, semantic search, and Q&A can follow once basic capture is reliable.
 - Keep automatic edges editable and visibly distinct from manual edges. Do not show a generated relationship explanation without source evidence.
 - Preserve saved pages when their browser tabs close. Keep tab identity separate from page identity.
