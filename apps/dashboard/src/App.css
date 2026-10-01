@@ -31,6 +31,25 @@
   gap: var(--space-md);
 }
 
+.integrationNotice,
+.startupState {
+  color: var(--text-secondary);
+}
+
+.integrationNotice {
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+.startupState {
+  max-width: 36rem;
+  margin: 20vh auto;
+  padding: var(--space-xl);
+}
+
 /* ── Demo controls (temporary) ── */
 .demoBar {
   position: fixed;

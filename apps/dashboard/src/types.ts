@@ -4,7 +4,16 @@
 // Member 3 publishes the OpenAPI schema.
 
 /** Processing status for a saved page (from backend). */
-export type PageStatus = "captured" | "processing" | "queued";
+export type PageStatus =
+  | "captured"
+  | "queued"
+  | "discovered"
+  | "extracting"
+  | "extracted"
+  | "processing"
+  | "ready"
+  | "extraction_failed"
+  | "processing_failed";
 
 /** A persisted research page returned by the backend API. */
 export interface SavedPage {

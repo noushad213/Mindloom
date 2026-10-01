@@ -36,7 +36,7 @@ export function TrackingHeader({
   savedPages,
   collectionEvents,
 }: TrackingHeaderProps) {
-  const capturedCount = savedPages.filter((p) => p.status === "captured").length;
+  const capturedCount = savedPages.filter((p) => ["captured", "extracted", "ready"].includes(p.status)).length;
   const processingCount = savedPages.filter((p) => p.status === "processing").length;
   const errorCount = collectionEvents.filter((e) => e.status === "failed").length;
   const isTransitioning = trackingState === "starting" || trackingState === "stopping";

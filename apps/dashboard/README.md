@@ -1,4 +1,15 @@
-# React + TypeScript + Vite
+# Mindloom dashboard
+
+The dashboard now uses the FastAPI service and the Chrome extension instead of fixture data.
+
+1. Copy `.env.example` to `.env.local`.
+2. Load `apps/extension` as an unpacked Chrome extension.
+3. Put the locally assigned extension ID in `VITE_EXTENSION_ID`.
+4. Start the API at `http://127.0.0.1:8000` and run `pnpm dev` here.
+
+The first successful API connection creates `My Research` when no workspace exists. **Start Tracking** is the explicit collection action: it connects to the extension, requests content from eligible open tabs, and sends each successful extraction to the active workspace.
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 

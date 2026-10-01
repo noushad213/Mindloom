@@ -96,11 +96,15 @@ The current configuration allows the frontend to connect from the listed localho
 ```json
 "externally_connectable": {
   "matches": [
+    "http://localhost:5173/*",
+    "http://127.0.0.1:5173/*",
     "http://localhost:5500/*",
     "http://127.0.0.1:5500/*"
   ]
 }
 ```
+
+Port `5173` is the default Mindloom Vite dashboard. Port `5500` remains available for the standalone test page.
 
 If you run the frontend on a different port, update these entries to match the new URL.
 
