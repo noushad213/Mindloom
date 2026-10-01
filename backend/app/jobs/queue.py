@@ -120,7 +120,33 @@ class JobQueue:
             page.error_code = None
             page.error_message = None
             db.flush()
-            return record_event(db, job.workspace_id, "page.processing_completed", {"page": page_body(db, page)})
+            
+            # Automatically trigger graph relationship recompute
+            queued_recompute = db.scalar(select(ProcessingJob.id).where(
+                ProcessingJob.workspace_id == job.workspace_id,
+                ProcessingJob.kind == "recompute_graph",
+                ProcessingJob.state == "queued"
+            ).limit(1))
+            
+            recompute_job_id = None
+            if not queued_recompute:
+                recompute_job = ProcessingJob(workspace_id=job.workspace_id, kind="recompute_graph", state="queued", attempts=0)
+                db.add(recompute_job)
+                db.flush()
+                recompute_job_id = recompute_job.id
+
+            event = record_event(db, job.workspace_id, "page.processing_completed", {"page": page_body(db, page)})
+        
+        # Enqueue the background task after db commit
+        if recompute_job_id:
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self.enqueue(recompute_job_id))
+            except RuntimeError:
+                pass
+                
+        return event
 
     def _recompute(self, job_id: UUID, params: dict | None = None) -> dict | None:
         with self.session_factory.begin() as db:
