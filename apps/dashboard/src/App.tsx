@@ -9,7 +9,6 @@ import { GraphView } from "./components/GraphView/GraphView";
 import { PageDrawer } from "./components/PageDrawer/PageDrawer";
 import "./App.css";
 
-const EXTENSION_ID = import.meta.env.VITE_EXTENSION_ID || "";
 
 function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
@@ -168,8 +167,7 @@ export default function App() {
     setTrackingState("starting");
     try {
       connectionRef.current = connectToExtension(
-        EXTENSION_ID,
-        (r) => void collectResults(r),
+        activeWorkspace.id,
         () => setTrackingState("active"),
         () => {
           connectionRef.current = null;
@@ -179,7 +177,7 @@ export default function App() {
     } catch {
       setTrackingState("unavailable");
     }
-  }, [activeWorkspace, collectResults]);
+  }, [activeWorkspace]);
 
   const handleStopTracking = useCallback(() => {
     setTrackingState("stopping");
