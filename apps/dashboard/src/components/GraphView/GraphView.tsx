@@ -8,6 +8,7 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  ConnectionMode,
 } from "@xyflow/react";
 import type {
   Connection,
@@ -94,6 +95,8 @@ export function GraphView({
         id: edge.id,
         source: edge.source,
         target: edge.target,
+        sourceHandle: "source",
+        targetHandle: "target",
         type: "customEdge",
         data: {
           ...edge,
@@ -138,6 +141,8 @@ export function GraphView({
           id: edge.id,
           source: edge.source,
           target: edge.target,
+          sourceHandle: "source",
+          targetHandle: "target",
           type: "customEdge",
           data: {
             ...edge,
@@ -183,6 +188,8 @@ export function GraphView({
           id: newEdge.id,
           source: newEdge.source,
           target: newEdge.target,
+          sourceHandle: "source",
+          targetHandle: "target",
           type: "customEdge",
           data: {
             ...newEdge,
@@ -309,6 +316,7 @@ export function GraphView({
           onNodeDragStop={handleNodeDragStop}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
+          connectionMode={ConnectionMode.Loose}
           fitView
           attributionPosition="bottom-right"
         >

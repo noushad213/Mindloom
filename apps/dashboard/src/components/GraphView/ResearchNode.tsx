@@ -23,6 +23,7 @@ export const ResearchNode = memo(({ data, selected }: NodeProps) => {
       onClick={() => nodeData.onSelectNode?.(nodeData)}
     >
       <Handle
+        id="target"
         type="target"
         position={Position.Top}
         className={styles.handle}
@@ -48,6 +49,7 @@ export const ResearchNode = memo(({ data, selected }: NodeProps) => {
       )}
 
       <Handle
+        id="source"
         type="source"
         position={Position.Bottom}
         className={styles.handle}
