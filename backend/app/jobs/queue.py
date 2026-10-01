@@ -134,8 +134,23 @@ class JobQueue:
             workspace = db.get(Workspace, workspace_id)
             effective_params = dict(workspace.settings or {}) if workspace else {}
             effective_params.update(params or {})
-            pages = db.scalars(select(Page).where(Page.workspace_id == workspace_id)).all()
-            page_data = [{"id": str(p.id), "title": p.title, "url": p.url, "text": p.text} for p in pages]
+            analyzed_pages = db.execute(
+                select(Page, PageAnalysis)
+                .join(PageAnalysis, PageAnalysis.page_id == Page.id)
+                .where(Page.workspace_id == workspace_id, PageAnalysis.embedding.is_not(None))
+            ).all()
+            page_data = [
+                {
+                    "id": str(page.id),
+                    "title": page.title,
+                    "url": page.url,
+                    "text": page.text,
+                    "embedding": analysis.embedding,
+                    "keywords": analysis.keywords,
+                    "simhash": analysis.simhash,
+                }
+                for page, analysis in analyzed_pages
+            ]
             rejected_pairs = {(str(e.source_page_id), str(e.target_page_id)) for e in db.scalars(
                 select(Edge).where(Edge.workspace_id == workspace_id, Edge.status == "rejected")).all()}
         result = compute_relationships(page_data, rejected_pairs, effective_params)
