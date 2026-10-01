@@ -1,2 +1,21 @@
 # Personal agent skills downloaded for this checkout
 /.agents/skills/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Editor
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local

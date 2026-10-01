@@ -1,0 +1,121 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.workspaceName {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ── Tracking control ── */
+.trackingControl {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+  padding-top: var(--space-sm);
+}
+
+.trackingStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotPaused {
+  background: var(--tracking-paused);
+}
+
+.dotStarting {
+  background: var(--tracking-starting);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.dotActive {
+  background: var(--tracking-active);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.dotStopping {
+  background: var(--tracking-starting);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.dotUnavailable {
+  background: var(--tracking-unavailable);
+}
+
+.statusLabel {
+  color: var(--text-secondary);
+}
+
+.trackingBtn {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--accent-primary);
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.trackingBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.trackingBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trackingBtnRetry {
+  background: var(--tracking-unavailable);
+}
+
+.trackingBtnRetry:hover:not(:disabled) {
+  background: #b93632;
+}
+
+/* ── Unavailable helper ── */
+.unavailableHelper {
+  font-size: 12px;
+  color: var(--status-error-text);
+  margin-top: var(--space-xs);
+  text-align: right;
+}
+
+/* ── Status strip ── */
+.statusStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+.statusDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}

@@ -1,0 +1,114 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-left: 3px solid var(--status-error-bg);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: transparent;
+  animation: fade-in-up 0.3s ease both;
+  transition: background 0.3s ease;
+}
+
+.rowNew {
+  animation: flash-red 1s ease both;
+}
+
+/* ── Icon ── */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--status-error-text);
+  margin-top: 1px;
+}
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.urlLine {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 2px;
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.actionBtn {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.1s ease;
+}
+
+.retryBtn {
+  color: var(--status-processing-text);
+  background: var(--status-processing-bg);
+}
+
+.retryBtn:hover {
+  background: #f5eac8;
+}
+
+.dismissBtn {
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.dismissBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ── Section header ── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clearBtn {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s ease;
+}
+
+.clearBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}

@@ -1,0 +1,180 @@
+/* ============================================================
+ * Mindloom Design Tokens
+ * Visual direction: Research Archive — warm, archival, editorial
+ * ============================================================ */
+
+:root {
+  /* Canvas */
+  --bg-canvas: #f7f6f3;
+  --bg-surface: #fefefe;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafaf8;
+
+  /* Text */
+  --text-primary: #2f3437;
+  --text-body: #37352f;
+  --text-secondary: #787774;
+  --text-tertiary: #a8a5a0;
+
+  /* Borders */
+  --border-default: #eaeaea;
+  --border-subtle: rgba(0, 0, 0, 0.06);
+
+  /* Status — pale background + dark text pairings */
+  --status-captured-bg: #edf3ec;
+  --status-captured-text: #346538;
+  --status-processing-bg: #fbf3db;
+  --status-processing-text: #956400;
+  --status-error-bg: #fdebec;
+  --status-error-text: #9f2f2d;
+  --status-queued-bg: #f7f6f3;
+  --status-queued-text: #787774;
+
+  /* Tracking state dots */
+  --tracking-active: #346538;
+  --tracking-starting: #956400;
+  --tracking-paused: #787774;
+  --tracking-unavailable: #9f2f2d;
+
+  /* Interactive */
+  --accent-primary: #2f3437;
+  --accent-hover: #3d4145;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-display: "Newsreader", "Instrument Serif", "Georgia", serif;
+  --font-body: -apple-system, "BlinkMacSystemFont", "SF Pro Display",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
+}
+
+/* ============================================================
+ * Reset & Base
+ * ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-body);
+  background: var(--bg-canvas);
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ============================================================
+ * Scrollbar (subtle)
+ * ============================================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+/* ============================================================
+ * Focus styles
+ * ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--tracking-active);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+ * Animations
+ * ============================================================ */
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flash-red {
+  0% {
+    background: var(--status-error-bg);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
