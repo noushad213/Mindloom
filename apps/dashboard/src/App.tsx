@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ingestExtraction, listPages, listWorkspaces, loadOrCreateWorkspace } from "./api";
+import { ingestExtraction, listPages, getInitialWorkspaces } from "./api";
 import { connectToExtension, type ExtensionConnection } from "./extension";
 import type { ExtensionExtractionResult } from "./integration";
 import type { CollectionEvent, GraphPage, SavedPage, TrackingState, Workspace } from "./types";
@@ -119,11 +119,9 @@ export default function App() {
     let cancelled = false;
     async function initialize() {
       try {
-        const initial = await loadOrCreateWorkspace();
+        const { initial, all } = await getInitialWorkspaces();
         if (cancelled) return;
-        const available = await listWorkspaces();
-        if (cancelled) return;
-        setWorkspaces(available.length ? available : [initial]);
+        setWorkspaces(all);
         setActiveWorkspace(initial);
         await refreshWorkspace(initial);
       } catch (error) {

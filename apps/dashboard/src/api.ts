@@ -1,9 +1,7 @@
 import { createIngestPayload, mapBackendPage } from "./integration";
 import type { BackendPage, ExtensionExtractionResult } from "./integration";
 import type { EdgeType, GraphEdge, GraphPage, GraphSnapshot, SavedPage, Workspace } from "./types";
-const API_BASE_URL = import.meta.env.DEV
-  ? ""
-  : (import.meta.env.VITE_API_URL || "https://b82wq2xh-8000.inc1.devtunnels.ms").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://b82wq2xh-8000.inc1.devtunnels.ms").replace(/\/$/, "");
 
 interface BackendWorkspace extends Workspace {
   page_count: number;
@@ -21,18 +19,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function loadOrCreateWorkspace(): Promise<Workspace> {
+export async function getInitialWorkspaces(): Promise<{ initial: Workspace; all: Workspace[] }> {
   const response = await request<{ items: BackendWorkspace[] }>("/api/v1/workspaces");
-  if (response.items[0]) return response.items[0];
-  return request<BackendWorkspace>("/api/v1/workspaces", {
+  if (response.items.length > 0) {
+    const all = response.items.map(({ id, name }) => ({ id, name }));
+    return { initial: all[0], all };
+  }
+  const initial = await request<BackendWorkspace>("/api/v1/workspaces", {
     method: "POST",
     body: JSON.stringify({ name: "My Research", description: null, excluded_domains: [] }),
   });
-}
-
-export async function listWorkspaces(): Promise<Workspace[]> {
-  const response = await request<{ items: BackendWorkspace[] }>("/api/v1/workspaces");
-  return response.items.map(({ id, name }) => ({ id, name }));
+  const mapped = { id: initial.id, name: initial.name };
+  return { initial: mapped, all: [mapped] };
 }
 
 export async function listPages(workspaceId: string): Promise<SavedPage[]> {
