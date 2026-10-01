@@ -1,7 +1,9 @@
 import { createIngestPayload, mapBackendPage } from "./integration";
 import type { BackendPage, ExtensionExtractionResult } from "./integration";
 import type { EdgeType, GraphEdge, GraphPage, GraphSnapshot, SavedPage, Workspace } from "./types";
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://b82wq2xh-8000.inc1.devtunnels.ms").replace(/\/$/, "");
+const API_BASE_URL = import.meta.env.DEV
+  ? ""
+  : (import.meta.env.VITE_API_URL || "https://b82wq2xh-8000.inc1.devtunnels.ms").replace(/\/$/, "");
 
 interface BackendWorkspace extends Workspace {
   page_count: number;
