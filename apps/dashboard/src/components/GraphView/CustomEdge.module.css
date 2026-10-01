@@ -23,7 +23,7 @@
 
 .suggested {
   border-style: dashed;
-  background: #fdfbf7;
+  background: var(--bg-surface);
 }
 
 .deleteBtn {

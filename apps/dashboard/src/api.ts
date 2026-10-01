@@ -1,22 +1,37 @@
 import { createIngestPayload, mapBackendPage } from "./integration";
 import type { BackendPage, ExtensionExtractionResult } from "./integration";
-import type { EdgeType, GraphEdge, GraphPage, GraphSnapshot, SavedPage, Workspace } from "./types";
+import type { EdgeType, GraphEdge, GraphSnapshot, SavedPage, Workspace } from "./types";
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://b82wq2xh-8000.inc1.devtunnels.ms").replace(/\/$/, "");
+
+export function shouldUseFixtures(value: string | undefined): boolean {
+  return value?.toLowerCase() === "true";
+}
 
 interface BackendWorkspace extends Workspace {
   page_count: number;
 }
 
+const pendingReads = new Map<string, Promise<unknown>>();
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-    throw new Error(body?.error?.message || `Mindloom API returned ${response.status}.`);
+  const readKey = !init || init.method === "GET" ? path : null;
+  if (readKey && pendingReads.has(readKey)) return pendingReads.get(readKey) as Promise<T>;
+  const pending = (async () => {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      throw new Error(body?.error?.message || `Mindloom API returned ${response.status}.`);
+    }
+    return response.json() as Promise<T>;
+  })();
+  if (readKey) {
+    pendingReads.set(readKey, pending);
+    void pending.finally(() => pendingReads.delete(readKey)).catch(() => {});
   }
-  return response.json() as Promise<T>;
+  return pending;
 }
 
 export async function getInitialWorkspaces(): Promise<{ initial: Workspace; all: Workspace[] }> {
@@ -90,6 +105,14 @@ export async function fetchGraphSnapshot(workspaceId: string): Promise<GraphSnap
     edges: res.edges,
     seq: res.seq,
   };
+}
+
+export function workspaceSocketUrl(workspaceId: string): string {
+  const url = new URL(API_BASE_URL);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = `/ws/workspaces/${encodeURIComponent(workspaceId)}`;
+  url.search = "";
+  return url.toString();
 }
 
 export async function createEdge(

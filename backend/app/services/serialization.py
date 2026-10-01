@@ -6,8 +6,9 @@ from app.schemas.pages import PageResponse, Position, TabSessionResponse
 from app.schemas.workspaces import WorkspaceResponse
 
 
-def workspace_body(db: Session, workspace: Workspace) -> dict:
-    page_count = db.scalar(select(func.count(Page.id)).where(Page.workspace_id == workspace.id)) or 0
+def workspace_body(db: Session, workspace: Workspace, page_count: int | None = None) -> dict:
+    if page_count is None:
+        page_count = db.scalar(select(func.count(Page.id)).where(Page.workspace_id == workspace.id)) or 0
     return WorkspaceResponse(
         id=workspace.id,
         name=workspace.name,

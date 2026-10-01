@@ -38,7 +38,16 @@ def list_workspaces(request: Request, include_archived: bool = False, db: Sessio
         query = query.where(Workspace.id == shared_workspace_id)
     if not include_archived:
         query = query.where(Workspace.archived_at.is_(None))
-    return {"items": [workspace_body(db, workspace) for workspace in db.scalars(query).all()]}
+    workspaces = db.scalars(query).all()
+    counts = dict(db.execute(
+        select(Page.workspace_id, func.count(Page.id))
+        .where(Page.workspace_id.in_([workspace.id for workspace in workspaces]))
+        .group_by(Page.workspace_id)
+    ).all()) if workspaces else {}
+    items = []
+    for workspace in workspaces:
+        items.append(workspace_body(db, workspace, counts.get(workspace.id, 0)))
+    return {"items": items}
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)

@@ -5,6 +5,7 @@ import styles from "./CustomEdge.module.css";
 
 export type CustomEdgeData = GraphEdge & {
   onDeleteEdge?: (edgeId: string) => void;
+  color?: string;
 };
 
 export function CustomEdge({
@@ -38,9 +39,9 @@ export function CustomEdge({
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          stroke: isSuggested ? "#a8a5a0" : "#787774",
-          strokeWidth: 1.5,
-          strokeDasharray: isSuggested ? "5,5" : undefined,
+          stroke: edgeData?.color || "var(--teal)",
+          strokeWidth: 2,
+          strokeDasharray: "3,5",
         }}
       />
       <EdgeLabelRenderer>
@@ -50,6 +51,7 @@ export function CustomEdge({
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
           }}
           className={`${styles.edgeLabel} ${isSuggested ? styles.suggested : ""}`}
+          title={edgeData?.evidence || undefined}
         >
           <span>{edgeData?.label || typeLabel}</span>
           {edgeData?.onDeleteEdge && (

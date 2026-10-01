@@ -6,6 +6,7 @@ import styles from "./ResearchNode.module.css";
 
 export type ResearchNodeData = GraphPage & {
   onSelectNode?: (page: GraphPage) => void;
+  clusterColor?: string;
 };
 
 export const ResearchNode = memo(({ data, selected }: NodeProps) => {
@@ -20,6 +21,7 @@ export const ResearchNode = memo(({ data, selected }: NodeProps) => {
   return (
     <div
       className={`${styles.node} ${selected ? styles.selected : ""}`}
+      style={{ borderTopColor: nodeData.clusterColor }}
       onClick={() => nodeData.onSelectNode?.(nodeData)}
     >
       <Handle
@@ -30,6 +32,7 @@ export const ResearchNode = memo(({ data, selected }: NodeProps) => {
       />
 
       <div className={styles.header}>
+        <span className={styles.clusterDot} style={{ backgroundColor: nodeData.clusterColor }} aria-hidden="true" />
         <span className={styles.domainBadge} title={nodeData.canonicalUrl}>
           {nodeData.sourceDomain || "web"}
         </span>

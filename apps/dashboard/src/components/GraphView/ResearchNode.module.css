@@ -9,7 +9,9 @@
   cursor: grab;
   position: relative;
   text-align: left;
+  border-top-width: 4px;
 }
+.clusterDot { width: 8px; height: 8px; flex: none; border-radius: 50%; }
 
 .node:hover {
   border-color: #d0cecb;
@@ -95,7 +97,7 @@
 .handle {
   width: 8px;
   height: 8px;
-  background: #ffffff;
+  background: var(--bg-card);
   border: 2px solid var(--text-secondary);
   border-radius: 50%;
   transition: background-color 0.15s ease, border-color 0.15s ease;

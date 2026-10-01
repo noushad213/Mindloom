@@ -22,12 +22,14 @@ import { CustomEdge } from "./CustomEdge";
 import type { GraphEdge, GraphPage, Workspace } from "../../types";
 import { createEdge, deleteEdge, fetchGraphSnapshot, updatePositions } from "../../api";
 import styles from "./GraphView.module.css";
+import { clusterColor, displayEdges, pageCluster } from "./graphPresentation";
 
 interface GraphViewProps {
   activeWorkspace: Workspace;
   onSelectPage?: (page: GraphPage) => void;
   onStartTracking?: () => void;
   embedded?: boolean;
+  refreshKey?: number;
 }
 
 function calculatePositions(pages: GraphPage[]): Array<{ x: number; y: number }> {
@@ -35,7 +37,7 @@ function calculatePositions(pages: GraphPage[]): Array<{ x: number; y: number }>
   if (total === 0) return [];
   if (total === 1) return [{ x: 350, y: 220 }];
 
-  const radius = Math.max(220, total * 45);
+  const radius = Math.max(260, total * 55);
   return pages.map((page, index) => {
     if (page.pos && typeof page.pos.x === "number" && typeof page.pos.y === "number") {
       return { x: page.pos.x, y: page.pos.y };
@@ -53,6 +55,7 @@ export function GraphView({
   onSelectPage,
   onStartTracking,
   embedded = false,
+  refreshKey = 0,
 }: GraphViewProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -87,11 +90,12 @@ export function GraphView({
         position: positions[i],
         data: {
           ...page,
+          clusterColor: clusterColor(pageCluster(page)),
           onSelectNode: onSelectPage,
         },
       }));
 
-      const flowEdges: Edge[] = snapshot.edges.map((edge: GraphEdge) => ({
+      const flowEdges: Edge[] = displayEdges(snapshot.pages, snapshot.edges).map((edge: GraphEdge) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
@@ -100,14 +104,10 @@ export function GraphView({
         type: "customEdge",
         data: {
           ...edge,
-          onDeleteEdge: handleDeleteEdge,
+          onDeleteEdge: edge.id.startsWith("visual:") ? undefined : handleDeleteEdge,
+          color: clusterColor(pageCluster(snapshot.pages.find((page) => page.id === edge.source)!)),
         },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 14,
-          height: 14,
-          color: edge.origin === "suggested" ? "#a8a5a0" : "#787774",
-        },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: clusterColor(pageCluster(snapshot.pages.find((page) => page.id === edge.source)!)) },
       }));
 
       setNodes(flowNodes);
@@ -117,7 +117,7 @@ export function GraphView({
     } finally {
       setLoading(false);
     }
-  }, [activeWorkspace.id, handleDeleteEdge, onSelectPage, setEdges, setNodes]);
+  }, [activeWorkspace.id, refreshKey, handleDeleteEdge, onSelectPage, setEdges, setNodes]);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,11 +133,12 @@ export function GraphView({
           position: positions[i],
           data: {
             ...page,
+            clusterColor: clusterColor(pageCluster(page)),
             onSelectNode: onSelectPage,
           },
         }));
 
-        const flowEdges: Edge[] = snapshot.edges.map((edge: GraphEdge) => ({
+        const flowEdges: Edge[] = displayEdges(snapshot.pages, snapshot.edges).map((edge: GraphEdge) => ({
           id: edge.id,
           source: edge.source,
           target: edge.target,
@@ -146,14 +147,10 @@ export function GraphView({
           type: "customEdge",
           data: {
             ...edge,
-            onDeleteEdge: handleDeleteEdge,
+              onDeleteEdge: edge.id.startsWith("visual:") ? undefined : handleDeleteEdge,
+              color: clusterColor(pageCluster(snapshot.pages.find((page) => page.id === edge.source)!)),
           },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 14,
-            height: 14,
-            color: edge.origin === "suggested" ? "#a8a5a0" : "#787774",
-          },
+          markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: clusterColor(pageCluster(snapshot.pages.find((page) => page.id === edge.source)!)) },
         }));
 
         setNodes(flowNodes);
@@ -172,7 +169,7 @@ export function GraphView({
     return () => {
       cancelled = true;
     };
-  }, [activeWorkspace.id, handleDeleteEdge, onSelectPage, setEdges, setNodes]);
+  }, [activeWorkspace.id, refreshKey, handleDeleteEdge, onSelectPage, setEdges, setNodes]);
 
   const handleConnect = useCallback(
     async (params: Connection) => {
@@ -194,12 +191,13 @@ export function GraphView({
           data: {
             ...newEdge,
             onDeleteEdge: handleDeleteEdge,
+            color: clusterColor(newEdge.source),
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 14,
             height: 14,
-            color: "#787774",
+            color: clusterColor(newEdge.source),
           },
         };
 
@@ -320,7 +318,7 @@ export function GraphView({
           fitView
           attributionPosition="bottom-right"
         >
-          <Background color="#dcdbd8" gap={20} size={1} />
+          <Background color="var(--border-default)" gap={20} size={1} />
           <Controls showInteractive={false} />
           <MiniMap
             nodeColor="#eaeaea"

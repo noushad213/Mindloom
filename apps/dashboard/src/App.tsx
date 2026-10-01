@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ingestExtraction, listPages, getInitialWorkspaces } from "./api";
+import { listPages, getInitialWorkspaces, workspaceSocketUrl } from "./api";
 import { connectToExtension, type ExtensionConnection } from "./extension";
-import type { ExtensionExtractionResult } from "./integration";
 import type { CollectionEvent, GraphPage, SavedPage, TrackingState, Workspace } from "./types";
 import { Sidebar, type AppView } from "./components/Sidebar/Sidebar";
 import { CollectionLog } from "./components/CollectionLog/CollectionLog";
@@ -64,19 +63,6 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
   );
 }
 
-function failureEvent(result: ExtensionExtractionResult, detail?: string): CollectionEvent {
-  return {
-    eventId: crypto.randomUUID(),
-    tabId: result.tabId,
-    url: result.url || "Restricted tab",
-    title: result.title || null,
-    timestamp: new Date().toISOString(),
-    status: "failed",
-    errorCode: "extraction_failed",
-    errorDetail: detail || result.error || "The page could not be collected.",
-  };
-}
-
 function timeAgo(date: string) {
   const m = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 60000));
   return m < 1 ? "now" : m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m / 60)}h` : `${Math.floor(m / 1440)}d`;
@@ -100,6 +86,15 @@ export default function App() {
   const [activeView, setActiveView] = useState<AppView>("overview");
   const [query, setQuery] = useState("");
   const [selectedPage, setSelectedPage] = useState<GraphPage | SavedPage | null>(null);
+  const [graphRefreshKey, setGraphRefreshKey] = useState(0);
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    window.localStorage.getItem("mindloom-theme") === "dark" ? "dark" : "light",
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("mindloom-theme", theme);
+  }, [theme]);
 
   const connectionRef = useRef<ExtensionConnection | null>(null);
 
@@ -116,6 +111,49 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!activeWorkspace) return;
+    let closed = false;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | undefined;
+    let retry = 0;
+    let connectedOnce = false;
+    const connect = () => {
+      if (closed) return;
+      socket = new WebSocket(workspaceSocketUrl(activeWorkspace.id));
+      socket.onopen = () => {
+        retry = 0;
+        if (connectedOnce) {
+          // A disconnected socket may have missed events; reconcile on reconnect.
+          void listPages(activeWorkspace.id).then(setSavedPages).catch(console.error);
+          setGraphRefreshKey((value) => value + 1);
+        }
+        connectedOnce = true;
+      };
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as { type?: string; workspace_id?: string };
+          if (message.workspace_id !== activeWorkspace.id || !message.type || message.type === "hello" || message.type === "ping") return;
+          if (message.type.startsWith("page.")) {
+            void listPages(activeWorkspace.id).then(setSavedPages).catch(console.error);
+          }
+          if (message.type.startsWith("page.") || message.type === "graph.changed") {
+            setGraphRefreshKey((value) => value + 1);
+          }
+        } catch (error) { console.error("Invalid workspace event", error); }
+      };
+      socket.onclose = () => {
+        if (!closed) reconnectTimer = window.setTimeout(connect, Math.min(1000 * 2 ** retry++, 15000));
+      };
+    };
+    connect();
+    return () => {
+      closed = true;
+      window.clearTimeout(reconnectTimer);
+      socket?.close();
+    };
+  }, [activeWorkspace]);
+
+  useEffect(() => {
     let cancelled = false;
     async function initialize() {
       try {
@@ -123,7 +161,7 @@ export default function App() {
         if (cancelled) return;
         setWorkspaces(all);
         setActiveWorkspace(initial);
-        await refreshWorkspace(initial);
+        void refreshWorkspace(initial);
       } catch (error) {
         if (!cancelled) {
           setLoadError(error instanceof Error ? error.message : "Could not connect to the Mindloom API.");
@@ -137,28 +175,6 @@ export default function App() {
       connectionRef.current?.disconnect();
     };
   }, [refreshWorkspace]);
-
-  const collectResults = useCallback(
-    async (results: ExtensionExtractionResult[]) => {
-      if (!activeWorkspace) return;
-      for (const result of results) {
-        if (!result.success) {
-          setCollectionEvents((e) => [failureEvent(result), ...e]);
-          continue;
-        }
-        try {
-          const page = await ingestExtraction(activeWorkspace.id, result);
-          setSavedPages((pages) => [page, ...pages.filter((p) => p.id !== page.id)]);
-        } catch (error) {
-          setCollectionEvents((e) => [
-            failureEvent(result, error instanceof Error ? error.message : "The API rejected this page."),
-            ...e,
-          ]);
-        }
-      }
-    },
-    [activeWorkspace],
-  );
 
   const handleStartTracking = useCallback(() => {
     if (!activeWorkspace || connectionRef.current) return;
@@ -250,6 +266,9 @@ export default function App() {
             <kbd>⌘ K</kbd>
           </label>
           <div className="topActions">
+            <button className="themeButton" type="button" onClick={() => setTheme(theme === "light" ? "dark" : "light")} aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`} title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}>
+              {theme === "light" ? "◐ Dark" : "☀ Light"}
+            </button>
             <div className={`trackingBadge state-${trackingState}`}>
               <span />
               {trackingState === "active"
@@ -279,12 +298,13 @@ export default function App() {
         {activeView === "graph" ? (
           <GraphView
             activeWorkspace={activeWorkspace}
+            refreshKey={graphRefreshKey}
             onSelectPage={(page) => setSelectedPage(page)}
             onStartTracking={handleStartTracking}
           />
         ) : activeView === "overview" ? (
           <div className="dashboardGrid">
-            {/* ─── Graph — full top row ─── */}
+            {/* ─── Top-left: Research graph ─── */}
             <section className="panel weavePanel">
               <div className="panelHeader">
                 <div>
@@ -298,6 +318,7 @@ export default function App() {
               <div className="graphContainer">
                 <GraphView
                   activeWorkspace={activeWorkspace}
+                  refreshKey={graphRefreshKey}
                   onSelectPage={(page) => setSelectedPage(page)}
                   onStartTracking={handleStartTracking}
                   embedded
@@ -305,9 +326,9 @@ export default function App() {
               </div>
             </section>
 
-            {/* ─── Bottom-left: captured logs + recent captures ─── */}
-            <div className="bottomLeft">
-              <section className="panel logCard" aria-label="Collection summary">
+            {/* ─── Top-right: Collection logs ─── */}
+            <section className="panel collectionLogPanel" aria-label="Collection logs">
+              <section className="logCard" aria-label="Collection summary">
                 <div className="logIcon">
                   <Icon name="link" size={18} />
                 </div>
@@ -332,43 +353,52 @@ export default function App() {
                   )}
                 </div>
               </section>
+              {errors > 0 && (
+                <CollectionLog
+                  events={collectionEvents}
+                  onDismiss={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
+                  onRetry={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
+                  onClearAll={() => setCollectionEvents([])}
+                />
+              )}
+            </section>
 
-              <section className="panel recentPanel">
-                <div className="panelHeader">
-                  <div>
-                    <span className="eyebrow">Recent captures</span>
-                    <h2>Latest sources</h2>
-                  </div>
-                  <button className="textButton" onClick={() => setActiveView("library")}>
-                    View all <Icon name="arrow" size={15} />
+            {/* ─── Bottom-left: Recent sources ─── */}
+            <section className="panel recentPanel">
+              <div className="panelHeader">
+                <div>
+                  <span className="eyebrow">Recent captures</span>
+                  <h2>Latest sources</h2>
+                </div>
+                <button className="textButton" onClick={() => setActiveView("library")}>
+                  View all <Icon name="arrow" size={15} />
+                </button>
+              </div>
+              <div className="sourceTable" role="table" aria-label="Recent saved sources">
+                {visiblePages.slice(0, 4).map((p, i) => (
+                  <button
+                    className="sourceRow"
+                    role="row"
+                    key={p.id}
+                    onClick={() => setSelectedPage(p)}
+                  >
+                    <span className={`sourceMark mark${i % 4}`}>
+                      <Icon name="file" size={14} />
+                    </span>
+                    <span className="sourceCopy">
+                      <strong>{p.title}</strong>
+                      <small>
+                        {p.sourceDomain} · {timeAgo(p.capturedAt)} ago
+                      </small>
+                    </span>
+                    <span className={`status status-${p.status}`}>
+                      {p.status === "captured" ? "Ready" : p.status}
+                    </span>
+                    <Icon name="arrow" size={14} />
                   </button>
-                </div>
-                <div className="sourceTable" role="table" aria-label="Recent saved sources">
-                  {visiblePages.slice(0, 4).map((p, i) => (
-                    <button
-                      className="sourceRow"
-                      role="row"
-                      key={p.id}
-                      onClick={() => setSelectedPage(p)}
-                    >
-                      <span className={`sourceMark mark${i % 4}`}>
-                        <Icon name="file" size={14} />
-                      </span>
-                      <span className="sourceCopy">
-                        <strong>{p.title}</strong>
-                        <small>
-                          {p.sourceDomain} · {timeAgo(p.capturedAt)} ago
-                        </small>
-                      </span>
-                      <span className={`status status-${p.status}`}>
-                        {p.status === "captured" ? "Ready" : p.status}
-                      </span>
-                      <Icon name="arrow" size={14} />
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
+                ))}
+              </div>
+            </section>
 
             {/* ─── Bottom-right: Today's focus ─── */}
             <aside className="panel focusPanel">
@@ -428,16 +458,6 @@ export default function App() {
               </div>
             </aside>
 
-            {errors > 0 && (
-              <section className="panel logPanel">
-                <CollectionLog
-                  events={collectionEvents}
-                  onDismiss={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
-                  onRetry={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
-                  onClearAll={() => setCollectionEvents([])}
-                />
-              </section>
-            )}
           </div>
         ) : (
           <section className="futureView">

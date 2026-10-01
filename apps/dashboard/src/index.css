@@ -69,6 +69,39 @@
   --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --navy: #111827;
+  --navy-soft: #202b3c;
+  --teal: #55c4d0;
+  --teal-bright: #75d5dc;
+  --workspace: #151d29;
+  --bg-canvas: #1b2633;
+  --bg-surface: #222f3d;
+  --bg-card: #293849;
+  --bg-card-hover: #314355;
+  --text-primary: #f0f5f6;
+  --text-body: #d9e2e7;
+  --text-secondary: #b5c4cd;
+  --text-tertiary: #9dadba;
+  --border-default: #415365;
+  --border-subtle: rgba(225, 238, 244, .12);
+  --status-captured-bg: #244b41;
+  --status-captured-text: #a7e7bd;
+  --status-processing-bg: #554327;
+  --status-processing-text: #fbd489;
+  --status-error-bg: #55343b;
+  --status-error-text: #ffc0bd;
+  --status-queued-bg: #354252;
+  --status-queued-text: #c3ced7;
+  --tracking-active: #a7e7bd;
+  --tracking-starting: #fbd489;
+  --tracking-paused: #aebbc7;
+  --tracking-unavailable: #ffc0bd;
+  --accent-primary: #55c4d0;
+  --accent-hover: #368d9a;
+}
+
 /* ============================================================
  * Reset & Base
  * ============================================================ */
