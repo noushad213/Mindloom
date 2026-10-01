@@ -1,6 +1,7 @@
 """Unit tests for Member 4's intelligence pipeline in app.intelligence.interface."""
 
 import pytest
+from app.intelligence import interface as intelligence
 from app.intelligence.interface import (
     process_page,
     compute_relationships,
@@ -60,7 +61,7 @@ def test_process_page():
     assert result.simhash is not None
     assert result.embedding is not None
     assert len(result.embedding) == EMBEDDING_DIM
-    assert result.summary_method == "extractive-tfidf"
+    assert result.summary_method == "extractive"
 
 
 def test_compute_relationships():
@@ -86,7 +87,7 @@ def test_compute_relationships():
     ]
 
     rejected_pairs = set()
-    result = compute_relationships(pages, rejected_pairs, params={"similarity_threshold": 0.5})
+    result = compute_relationships(pages, rejected_pairs, params={"edge_threshold": 0.5})
 
     assert len(result.candidate_edges) >= 1
     edge = result.candidate_edges[0]
@@ -94,6 +95,8 @@ def test_compute_relationships():
     assert edge["target"] in ["11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222"]
     assert "evidence" in edge
     assert "confidence" in edge
+    assert edge["origin"] == "suggested"
+    assert isinstance(edge["evidence"], dict)
 
 
 def test_compute_relationships_respects_rejected_pairs():
@@ -105,7 +108,7 @@ def test_compute_relationships_respects_rejected_pairs():
     ]
 
     rejected_pairs = {(id1, id2)}
-    result = compute_relationships(pages, rejected_pairs, params={"similarity_threshold": 0.1})
+    result = compute_relationships(pages, rejected_pairs, params={"edge_threshold": 0.1})
 
     assert len(result.candidate_edges) == 0
 
@@ -114,3 +117,42 @@ def test_embed_query():
     query_vec = embed_query("Python web framework")
     assert query_vec is not None
     assert len(query_vec) == EMBEDDING_DIM
+
+
+def test_process_page_caps_model_inputs_and_summary(monkeypatch):
+    observed = {}
+
+    def summarize(text, title):
+        observed["summary_input"] = len(text)
+        return "a" * 500
+
+    def embed(text):
+        observed["embedding_input"] = len(text)
+        return [0.0] * EMBEDDING_DIM, "test-model"
+
+    monkeypatch.setattr(intelligence, "generate_extractive_summary", summarize)
+    monkeypatch.setattr(intelligence, "generate_embedding", embed)
+    result = process_page("x" * 100_001, "Oversized", "https://example.com")
+
+    assert observed == {"summary_input": 50_000, "embedding_input": 50_000}
+    assert result.summary == "a" * 397 + "..."
+
+
+def test_compute_relationships_uses_stored_embeddings(monkeypatch):
+    def reject_inference(_text):
+        raise AssertionError("recompute must not embed analyzed pages again")
+
+    monkeypatch.setattr(intelligence, "generate_embedding", reject_inference)
+    embedding = [0.0] * EMBEDDING_DIM
+    embedding[0] = 1.0
+    pages = [
+        {"id": "11111111-1111-1111-1111-111111111111", "title": "A", "text": "same topic",
+         "embedding": embedding, "keywords": ["topic"], "simhash": "0" * 16},
+        {"id": "22222222-2222-2222-2222-222222222222", "title": "B", "text": "same topic",
+         "embedding": embedding, "keywords": ["topic"], "simhash": "0" * 16},
+    ]
+
+    result = compute_relationships(pages, set(), {"edge_threshold": 0.9})
+
+    assert len(result.candidate_edges) == 1
+    assert isinstance(result.candidate_edges[0]["evidence"], dict)
