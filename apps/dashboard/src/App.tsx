@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ingestExtraction, isFixtureMode, listPages, listWorkspaces, loadOrCreateWorkspace } from "./api";
-import { FIXTURE_COLLECTION_EVENTS } from "./fixtures";
+import { ingestExtraction, listPages, listWorkspaces, loadOrCreateWorkspace } from "./api";
 import { connectToExtension, type ExtensionConnection } from "./extension";
 import type { ExtensionExtractionResult } from "./integration";
 import type { CollectionEvent, GraphPage, SavedPage, TrackingState, Workspace } from "./types";
@@ -96,9 +95,7 @@ export default function App() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
   const [trackingState, setTrackingState] = useState<TrackingState>("paused");
   const [savedPages, setSavedPages] = useState<SavedPage[]>([]);
-  const [collectionEvents, setCollectionEvents] = useState<CollectionEvent[]>(() =>
-    isFixtureMode ? FIXTURE_COLLECTION_EVENTS.map((event) => ({ ...event })) : [],
-  );
+  const [collectionEvents, setCollectionEvents] = useState<CollectionEvent[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<AppView>("overview");
