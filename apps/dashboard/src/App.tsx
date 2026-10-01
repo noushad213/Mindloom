@@ -242,28 +242,28 @@ export default function App() {
       />
       <main className="main">
         <header className="topbar">
-          <div>
-            <span className="eyebrow">Workspace / {activeWorkspace.name}</span>
-            <h1>{viewTitle[activeView]}</h1>
+          <div className="topbarBrand">
+            <span className="topbarLogo"><i/><i/><i/></span>
+            <span>MindLoom</span>
           </div>
+          <label className="quickSearch">
+            <Icon name="search" size={16} />
+            <span className="srOnly">Search pages</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search this workspace…"
+            />
+            <kbd>⌘ K</kbd>
+          </label>
           <div className="topActions">
-            <label className="quickSearch">
-              <Icon name="search" size={16} />
-              <span className="srOnly">Search pages</span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search this workspace"
-              />
-              <kbd>⌘ K</kbd>
-            </label>
             <div className={`trackingBadge state-${trackingState}`}>
               <span />
               {trackingState === "active"
                 ? "Collecting"
                 : trackingState === "unavailable"
                 ? "Extension offline"
-                : "Tracking paused"}
+                : "Paused"}
             </div>
             <button
               className="primaryButton"
@@ -291,45 +291,18 @@ export default function App() {
           />
         ) : activeView === "overview" ? (
           <div className="dashboardGrid">
-            <section className="pulseStrip" aria-label="Workspace summary">
-              <div className="pulseIntro">
-                <span className="pulseLabel">Research pulse</span>
-                <strong>{savedPages.length || 30}</strong>
-                <span>sources in this workspace</span>
-              </div>
-              <div className="metric teal">
-                <span>Ready to explore</span>
-                <strong>{ready || 24}</strong>
-                <small>+6 this week</small>
-              </div>
-              <div className="metric amber">
-                <span>Relationships</span>
-                <strong>42</strong>
-                <small>8 need review</small>
-              </div>
-              <div className="metric navy">
-                <span>Open threads</span>
-                <strong>07</strong>
-                <small>across 4 topics</small>
-              </div>
-              <div className="metric pale">
-                <span>Processing</span>
-                <strong>{processing || 2}</strong>
-                <small>{errors ? `${errors} capture issues` : "Queue is healthy"}</small>
-              </div>
-            </section>
-
+            {/* ─── Graph — full top row ─── */}
             <section className="panel weavePanel">
               <div className="panelHeader">
                 <div>
                   <span className="eyebrow">Knowledge canvas</span>
-                  <h2>Interactive research graph</h2>
+                  <h2>Research graph</h2>
                 </div>
                 <button className="textButton" onClick={() => setActiveView("graph")}>
                   Open full graph <Icon name="arrow" size={15} />
                 </button>
               </div>
-              <div style={{ height: 320, width: "100%", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
+              <div className="graphContainer">
                 <GraphView
                   activeWorkspace={activeWorkspace}
                   onSelectPage={(page) => setSelectedPage(page)}
@@ -339,75 +312,76 @@ export default function App() {
               </div>
             </section>
 
-            <section className="panel topicPanel">
-              <div className="panelHeader">
-                <div>
-                  <span className="eyebrow">Topic map</span>
-                  <h2>Active lines of inquiry</h2>
+            {/* ─── Bottom-left: captured logs + recent captures ─── */}
+            <div className="bottomLeft">
+              <section className="panel logCard" aria-label="Collection summary">
+                <div className="logIcon">
+                  <Icon name="link" size={18} />
                 </div>
-                <button className="iconButton" aria-label="Topic options">
-                  <Icon name="more" />
-                </button>
-              </div>
-              <div className="topicList">
-                {topics.map((t) => (
-                  <div className="topicRow" key={t.name}>
-                    <div>
-                      <strong>{t.name}</strong>
-                      <span>{t.count} sources</span>
-                    </div>
-                    <div className="topicTrack">
-                      <i className={t.color} style={{ width: `${t.width}%` }} />
-                    </div>
+                <div className="logInfo">
+                  <strong>Captured logs</strong>
+                  <span>{activeWorkspace.name} workspace</span>
+                </div>
+                <div className="logStatRow">
+                  <div className="logStat tealDot">
+                    <strong>{ready || 24}</strong>
+                    <span>ready</span>
                   </div>
-                ))}
-              </div>
-              <button className="quietButton">
-                <Icon name="plus" size={15} /> Create group
-              </button>
-            </section>
-
-            <section className="panel recentPanel">
-              <div className="panelHeader">
-                <div>
-                  <span className="eyebrow">Recent captures</span>
-                  <h2>Sources arriving in your loom</h2>
+                  <div className="logStat amberDot">
+                    <strong>{processing || 2}</strong>
+                    <span>processing</span>
+                  </div>
+                  {errors > 0 && (
+                    <div className="logStat redDot">
+                      <strong>{errors}</strong>
+                      <span>failed</span>
+                    </div>
+                  )}
                 </div>
-                <button className="textButton" onClick={() => setActiveView("library")}>
-                  View library <Icon name="arrow" size={15} />
-                </button>
-              </div>
-              <div className="sourceTable" role="table" aria-label="Recent saved sources">
-                {visiblePages.slice(0, 4).map((p, i) => (
-                  <button
-                    className="sourceRow"
-                    role="row"
-                    key={p.id}
-                    onClick={() => setSelectedPage(p)}
-                  >
-                    <span className={`sourceMark mark${i % 4}`}>
-                      <Icon name="file" size={16} />
-                    </span>
-                    <span className="sourceCopy">
-                      <strong>{p.title}</strong>
-                      <small>
-                        {p.sourceDomain} · {timeAgo(p.capturedAt)} ago
-                      </small>
-                    </span>
-                    <span className="sourceTopic">{topics[i % topics.length].name}</span>
-                    <span className={`status status-${p.status}`}>
-                      {p.status === "captured" ? "Ready" : p.status}
-                    </span>
-                    <Icon name="arrow" size={15} />
-                  </button>
-                ))}
-              </div>
-            </section>
+              </section>
 
+              <section className="panel recentPanel">
+                <div className="panelHeader">
+                  <div>
+                    <span className="eyebrow">Recent captures</span>
+                    <h2>Latest sources</h2>
+                  </div>
+                  <button className="textButton" onClick={() => setActiveView("library")}>
+                    View all <Icon name="arrow" size={15} />
+                  </button>
+                </div>
+                <div className="sourceTable" role="table" aria-label="Recent saved sources">
+                  {visiblePages.slice(0, 4).map((p, i) => (
+                    <button
+                      className="sourceRow"
+                      role="row"
+                      key={p.id}
+                      onClick={() => setSelectedPage(p)}
+                    >
+                      <span className={`sourceMark mark${i % 4}`}>
+                        <Icon name="file" size={14} />
+                      </span>
+                      <span className="sourceCopy">
+                        <strong>{p.title}</strong>
+                        <small>
+                          {p.sourceDomain} · {timeAgo(p.capturedAt)} ago
+                        </small>
+                      </span>
+                      <span className={`status status-${p.status}`}>
+                        {p.status === "captured" ? "Ready" : p.status}
+                      </span>
+                      <Icon name="arrow" size={14} />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            {/* ─── Bottom-right: Today's focus ─── */}
             <aside className="panel focusPanel">
               <div className="panelHeader">
                 <div>
-                  <span className="eyebrow">Today’s focus</span>
+                  <span className="eyebrow">Today's focus</span>
                   <h2>Keep the thread moving</h2>
                 </div>
               </div>
@@ -435,8 +409,30 @@ export default function App() {
                 </label>
               </div>
               <button className="quietButton">
-                <Icon name="plus" size={15} /> Add research task
+                <Icon name="plus" size={13} /> Add task
               </button>
+
+              <div style={{ marginTop: 12 }}>
+                <div className="panelHeader">
+                  <div>
+                    <span className="eyebrow">Topic map</span>
+                    <h2>Active topics</h2>
+                  </div>
+                </div>
+                <div className="topicList">
+                  {topics.map((t) => (
+                    <div className="topicRow" key={t.name}>
+                      <div>
+                        <strong>{t.name}</strong>
+                        <span>{t.count} sources</span>
+                      </div>
+                      <div className="topicTrack">
+                        <i className={t.color} style={{ width: `${t.width}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </aside>
 
             {errors > 0 && (
