@@ -1,0 +1,106 @@
+.node {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  width: 260px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: grab;
+  position: relative;
+  text-align: left;
+}
+
+.node:hover {
+  border-color: #d0cecb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.selected {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--text-primary), 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.domainBadge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-canvas);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.statusPill {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: capitalize;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.statusReady,
+.statusCaptured {
+  background: var(--status-captured-bg);
+  color: var(--status-captured-text);
+}
+
+.statusProcessing,
+.statusQueued {
+  background: var(--status-processing-bg);
+  color: var(--status-processing-text);
+}
+
+.statusFailed,
+.statusExtractionFailed {
+  background: var(--status-error-bg);
+  color: var(--status-error-text);
+}
+
+.title {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.summary {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.handle {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.handle:hover {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}

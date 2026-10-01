@@ -1,4 +1,12 @@
 from logging.config import fileConfig
+from pathlib import Path
+import sys
+
+# Alembic may be invoked from the repository root (CI, tests, or monorepo
+# scripts). Make the backend package importable independently of cwd.
+BACKEND_ROOT = Path(__file__).resolve().parents[3]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool, text
