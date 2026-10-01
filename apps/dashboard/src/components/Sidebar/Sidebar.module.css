@@ -19,10 +19,8 @@
 .nav .sectionLabel:not(:first-child) { margin-top: 20px; }
 .nav button { position: relative; width: 100%; min-height: 39px; padding: 0 10px; display: flex; align-items: center; gap: 11px; color: #b9c0ce; border-radius: 7px; text-align: left; font-size: 11px; font-weight: 600; }
 .nav button:hover { background: #2d344e; color: white; }
-.nav button.active { z-index: 1; width: calc(100% + 18px); margin-right: -18px; padding-left: 17px; background: #eef3f5; color: #20313b; border-radius: 999px 0 0 999px; }
-.nav button.active::before, .nav button.active::after { content: ""; position: absolute; right: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--navy); pointer-events: none; }
-.nav button.active::before { top: -20px; box-shadow: 8px 8px 0 7px #eef3f5; }
-.nav button.active::after { bottom: -20px; box-shadow: 8px -8px 0 7px #eef3f5; }
+.nav button.active { z-index: 1; width: calc(100% + 18px); margin-right: -18px; padding-left: 17px; background: var(--workspace); color: var(--text-primary); border-radius: 999px 0 0 999px; }
+.nav button.active:hover { background: var(--workspace); color: var(--text-primary); }
 .nav button.active svg { color: var(--teal); stroke-width: 2; }
 .nav svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .badge { margin-left: auto; margin-right: 18px; padding: 1px 6px; background: var(--amber); color: #3d2f16; border-radius: 9px; font-size: 8px; }
@@ -39,4 +37,4 @@
 .sidebar footer small { font-size: 8px; color: #8f98ab; }
 .sidebar footer button { color: #8f98ab; letter-spacing: 2px; }
 @media (max-width: 1100px) { .sidebar { width: 224px; } .captureCard { display: none; } }
-@media (max-width: 720px) { .sidebar { right: 0; bottom: auto; width: auto; height: 64px; padding: 10px 14px; flex-direction: row; align-items: center; } .brand { margin: 0; } .workspace, .captureCard, .sidebar footer, .sectionLabel { display: none; } .nav { margin-left: auto; flex: none; flex-direction: row; overflow: hidden; } .nav button, .nav button.active { width: 38px; margin: 0; padding: 0; justify-content: center; border-radius: 7px; } .nav button.active::before, .nav button.active::after { display: none; } .nav button:nth-of-type(n+4) { display: none; } .nav button { font-size: 0; } .nav .badge { display: none; } }
+@media (max-width: 720px) { .sidebar { right: 0; bottom: auto; width: auto; height: 64px; padding: 10px 14px; flex-direction: row; align-items: center; } .brand { margin: 0; } .workspace, .captureCard, .sidebar footer, .sectionLabel { display: none; } .nav { margin-left: auto; flex: none; flex-direction: row; overflow: hidden; } .nav button, .nav button.active { width: 38px; margin: 0; padding: 0; justify-content: center; border-radius: 7px; } .nav button:nth-of-type(n+4) { display: none; } .nav button { font-size: 0; } .nav .badge { display: none; } }
