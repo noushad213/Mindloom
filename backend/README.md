@@ -11,7 +11,6 @@ backend/.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir backend --rel
 ```
 
 Alembic resolves the backend package independently of the current working directory, so the migration command is safe to run from the repository root in local scripts and CI. PostgreSQL must have pgvector installed and the migration role must be allowed to run `CREATE EXTENSION IF NOT EXISTS vector`.
-
 `GET /api/v1/health` checks the database and returns `{"status":"ok","version":"0.1.0","db":"ok"}`. The migrations enable pgvector, create the ingestion tables, and add `page_analysis`, graph storage, `processing_jobs`, and the workspace event log.
 
 Implemented routes cover workspace CRUD, graph snapshots, single-page ingest and listing, page read/delete, tab-session listing/close, edge and group editing, notes and tags, search, JSON/Markdown export, share links, job status, processing summary, health, and `/ws/workspaces/{id}`. Ingest creates a durable job and broadcasts workspace events. The in-process queue has two workers and recovers queued/running jobs on startup. Run a single API worker until a distributed job claim/recovery policy is added.

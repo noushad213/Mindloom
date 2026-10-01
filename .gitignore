@@ -1,6 +1,5 @@
 # Personal agent skills downloaded for this checkout
 /.agents/skills/
-
 # Dependencies
 node_modules/
 
@@ -19,6 +18,7 @@ Thumbs.db
 # Env files
 .env
 .env.local
+**/.env
 
 # Python caches
 **/__pycache__/

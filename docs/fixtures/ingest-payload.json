@@ -1,0 +1,26 @@
+{
+  "client_event_id": "8b1e0000-0000-4000-8000-000000000001",
+  "url": "https://www.example.com/article?id=5&utm_source=demo",
+  "title": "Research article",
+  "text": "A useful research article.",
+  "meta": {
+    "description": "A short description",
+    "og_image": null,
+    "favicon": null,
+    "lang": "en",
+    "site_name": "Example",
+    "byline": null
+  },
+  "extraction": {
+    "status": "ok",
+    "method": "readability",
+    "error_code": null,
+    "error_message": null
+  },
+  "tab": {
+    "browser_tab_id": 12,
+    "window_id": 1,
+    "active": false
+  },
+  "captured_at": "2026-10-01T10:00:00Z"
+}
