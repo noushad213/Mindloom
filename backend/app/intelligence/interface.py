@@ -7,14 +7,20 @@ with TF-IDF/hash fallback), explainable relationship scoring, and topic clusteri
 
 from dataclasses import dataclass
 import hashlib
+import logging
 import math
 import re
-from typing import Any, List, Dict, Set, Tuple, Optional
+import threading
+from typing import Any, List, Dict, Set, Tuple
 
 # Lazy-loaded model singleton to prevent cold start penalties and memory overhead
 _MODEL_SINGLETON: Any = None
 _MODEL_LOADED: bool = False
+_MODEL_LOCK = threading.Lock()
+logger = logging.getLogger(__name__)
 EMBEDDING_DIM = 384
+MAX_INPUT_CHARS = 50_000
+MAX_SUMMARY_CHARS = 400
 
 # Default English stopwords list for light NLP fallback
 ENGLISH_STOPWORDS = {
@@ -54,32 +60,38 @@ class RelationshipResult:
 
 
 def _get_sentence_transformer() -> Tuple[Any, str]:
-    """Lazy loader for SentenceTransformer model with fallback."""
+    """Load the model once per process; report failures before using the fallback."""
     global _MODEL_SINGLETON, _MODEL_LOADED
-    if _MODEL_LOADED:
-        return _MODEL_SINGLETON, ("all-MiniLM-L6-v2" if _MODEL_SINGLETON is not None else "tfidf-hash-384")
-
-    _MODEL_LOADED = True
-    try:
-        from sentence_transformers import SentenceTransformer
-        _MODEL_SINGLETON = SentenceTransformer("all-MiniLM-L6-v2")
-        return _MODEL_SINGLETON, "all-MiniLM-L6-v2"
-    except Exception:
-        _MODEL_SINGLETON = None
-        return None, "tfidf-hash-384"
+    if not _MODEL_LOADED:
+        with _MODEL_LOCK:
+            if not _MODEL_LOADED:
+                try:
+                    from sentence_transformers import SentenceTransformer
+                    _MODEL_SINGLETON = SentenceTransformer("all-MiniLM-L6-v2")
+                except Exception:
+                    logger.exception("Could not load all-MiniLM-L6-v2; using the lexical hash fallback")
+                    _MODEL_SINGLETON = None
+                finally:
+                    _MODEL_LOADED = True
+    return _MODEL_SINGLETON, ("all-MiniLM-L6-v2" if _MODEL_SINGLETON is not None else "tfidf-hash-384")
 
 
 def clean_main_content(text: str) -> str:
     """Strips HTML tags, scripts, header/footer noise, and normalizes whitespace."""
     if not text:
         return ""
+    text = text[:MAX_INPUT_CHARS]
     # Strip HTML tags
     cleaned = re.sub(r"<[^>]+>", " ", text)
     # Strip URLs
     cleaned = re.sub(r"https?://\S+", " ", cleaned)
     # Collapse multiple whitespaces
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned
+    return cleaned[:MAX_INPUT_CHARS]
+
+
+def _limit_summary(summary: str) -> str:
+    return summary if len(summary) <= MAX_SUMMARY_CHARS else summary[:MAX_SUMMARY_CHARS - 3] + "..."
 
 
 def extract_keywords(text: str, top_n: int = 8) -> List[str]:
@@ -100,11 +112,11 @@ def extract_keywords(text: str, top_n: int = 8) -> List[str]:
 def generate_extractive_summary(text: str, title: str, num_sentences: int = 3) -> str:
     """Generates a concise extractive summary based on keyword density."""
     if not text:
-        return title or "Untitled Page"
+        return _limit_summary(title or "Untitled Page")
 
     sentences = re.split(r"(?<=[.!?]) +", text)
     if len(sentences) <= num_sentences:
-        return " ".join(sentences)
+        return _limit_summary(" ".join(sentences))
 
     keywords = set(extract_keywords(text, top_n=15))
     sentence_scores: List[Tuple[float, int, str]] = []
@@ -122,7 +134,7 @@ def generate_extractive_summary(text: str, title: str, num_sentences: int = 3) -
     top_sentences = sorted(sentence_scores[:num_sentences], key=lambda x: x[1])
     
     summary = " ".join([s[2] for s in top_sentences])
-    return summary if summary else title
+    return _limit_summary(summary if summary else title)
 
 
 def compute_simhash(text: str) -> str:
@@ -154,10 +166,12 @@ def generate_embedding(text: str) -> Tuple[List[float], str]:
     model, model_name = _get_sentence_transformer()
     if model is not None:
         try:
-            vec = model.encode(text, convert_to_numpy=True).tolist()
+            vec = [float(value) for value in model.encode(text, convert_to_numpy=True).tolist()]
+            if len(vec) != EMBEDDING_DIM or not all(math.isfinite(value) for value in vec):
+                raise ValueError("SentenceTransformer returned an invalid embedding")
             return vec, model_name
         except Exception:
-            pass
+            logger.exception("SentenceTransformer inference failed; using the lexical hash fallback")
 
     # Fallback: Deterministic 384-dimensional normalized word feature vector
     vector = [0.0] * EMBEDDING_DIM
@@ -192,11 +206,11 @@ def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
 def process_page(text: str, title: str, url: str) -> PageAnalysisResult:
     """Processes page content: cleans text, generates summary, extracts keywords,
     calculates SimHash, and generates a 384-d semantic embedding."""
-    cleaned = clean_main_content(text)
+    cleaned = clean_main_content((text or "")[:MAX_INPUT_CHARS])
     if not cleaned:
-        cleaned = title or url
+        cleaned = (title or url)[:MAX_INPUT_CHARS]
         
-    summary = generate_extractive_summary(cleaned, title=title)
+    summary = _limit_summary(generate_extractive_summary(cleaned, title=title))
     keywords = extract_keywords(cleaned, top_n=8)
     simhash_str = compute_simhash(cleaned)
     embedding, model_name = generate_embedding(cleaned)
@@ -207,7 +221,7 @@ def process_page(text: str, title: str, url: str) -> PageAnalysisResult:
         keywords=keywords,
         simhash=simhash_str,
         embedding=embedding,
-        summary_method="extractive-tfidf",
+        summary_method="extractive",
         embedding_model=model_name,
     )
 
@@ -220,24 +234,32 @@ def compute_relationships(pages: list[Any], rejected_pairs: set[tuple[str, str]]
     if not pages or len(pages) < 2:
         return RelationshipResult(candidate_edges=[], clusters=[])
 
-    threshold = 0.75
+    threshold = 0.35
     if isinstance(params, dict):
-        threshold = params.get("similarity_threshold", 0.75)
+        threshold = float(params.get("edge_threshold", threshold))
 
     processed_pages: List[Dict[str, Any]] = []
     for p in pages:
         p_id = str(p.get("id") if isinstance(p, dict) else getattr(p, "id"))
-        p_title = str(p.get("title") if isinstance(p, dict) else getattr(p, "title", ""))
-        p_text = str(p.get("text") if isinstance(p, dict) else getattr(p, "text", ""))
-        
-        # Analyze or reuse existing page features
-        keywords = extract_keywords(p_text, top_n=8)
-        simhash_str = compute_simhash(p_text)
-        embedding, _ = generate_embedding(p_text)
+        p_title = str((p.get("title") if isinstance(p, dict) else getattr(p, "title", "")) or "")
+        p_text = clean_main_content(str((p.get("text") if isinstance(p, dict) else getattr(p, "text", "")) or ""))
+        cached_keywords = p.get("keywords") if isinstance(p, dict) else getattr(p, "keywords", None)
+        cached_simhash = p.get("simhash") if isinstance(p, dict) else getattr(p, "simhash", None)
+        cached_embedding = p.get("embedding") if isinstance(p, dict) else getattr(p, "embedding", None)
+
+        keywords = list(cached_keywords) if cached_keywords is not None else extract_keywords(p_text, top_n=8)
+        simhash_str = cached_simhash if cached_simhash is not None else compute_simhash(p_text)
+        if cached_embedding is not None:
+            embedding = [float(value) for value in cached_embedding]
+            if len(embedding) != EMBEDDING_DIM or not all(math.isfinite(value) for value in embedding):
+                raise ValueError(f"Page {p_id} has an invalid stored embedding")
+        else:
+            embedding, _ = generate_embedding(p_text)
 
         processed_pages.append({
             "id": p_id,
             "title": p_title,
+            "text": p_text,
             "keywords": keywords,
             "simhash": simhash_str,
             "embedding": embedding
@@ -260,19 +282,30 @@ def compute_relationships(pages: list[Any], rejected_pairs: set[tuple[str, str]]
             is_dup = (p1["simhash"] == p2["simhash"] and p1["simhash"] != "0" * 16) or sim_score >= 0.95
 
             if is_dup or sim_score >= threshold:
-                shared_kw = list(set(p1["keywords"]).intersection(set(p2["keywords"])))
-                shared_kw_str = ", ".join(shared_kw[:3]) if shared_kw else "semantic topic overlap"
+                shared_kw = sorted(set(p1["keywords"]).intersection(set(p2["keywords"])))
 
                 edge_type = "duplicate_of" if is_dup else "related_to"
                 label = "Duplicate Content" if is_dup else f"Related ({int(sim_score * 100)}%)"
-                evidence = f"High semantic similarity ({sim_score:.2f}). Shared key concepts: {shared_kw_str}."
+                bounded_score = min(1.0, max(0.0, sim_score))
+                evidence = {
+                    "method": "simhash+cosine" if is_dup else "embedding_cosine+keywords",
+                    "score": round(bounded_score, 4),
+                    "similarity": round(sim_score, 4),
+                    "shared_keywords": shared_kw,
+                    "snippets": [
+                        {"page_id": id1, "text": p1["text"][:200]},
+                        {"page_id": id2, "text": p2["text"][:200]},
+                    ],
+                }
 
                 candidate_edges.append({
                     "source": id1,
                     "target": id2,
                     "type": edge_type,
                     "label": label,
-                    "confidence": round(sim_score, 2),
+                    "origin": "suggested",
+                    "status": "suggested",
+                    "confidence": round(bounded_score, 2),
                     "evidence": evidence
                 })
                 connected_adj[id1].add(id2)
