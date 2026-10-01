@@ -4,21 +4,30 @@
  * ============================================================ */
 
 :root {
+  /* Mindloom dashboard palette */
+  --navy: #252c48;
+  --navy-soft: #303854;
+  --teal: #0f6170;
+  --teal-bright: #1a7b83;
+  --amber: #f2b957;
+  --mint: #73c4ad;
+  --workspace: #dfe8ed;
+
   /* Canvas */
-  --bg-canvas: #f7f6f3;
-  --bg-surface: #fefefe;
+  --bg-canvas: #e7eef2;
+  --bg-surface: #f8fbfc;
   --bg-card: #ffffff;
   --bg-card-hover: #fafaf8;
 
   /* Text */
-  --text-primary: #2f3437;
-  --text-body: #37352f;
-  --text-secondary: #787774;
-  --text-tertiary: #a8a5a0;
+  --text-primary: #20263c;
+  --text-body: #343b4d;
+  --text-secondary: #687282;
+  --text-tertiary: #929cab;
 
   /* Borders */
-  --border-default: #eaeaea;
-  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-default: #dce3e7;
+  --border-subtle: rgba(32, 38, 60, 0.08);
 
   /* Status — pale background + dark text pairings */
   --status-captured-bg: #edf3ec;
@@ -37,8 +46,8 @@
   --tracking-unavailable: #9f2f2d;
 
   /* Interactive */
-  --accent-primary: #2f3437;
-  --accent-hover: #3d4145;
+  --accent-primary: var(--teal);
+  --accent-hover: #0b5360;
 
   /* Spacing */
   --space-xs: 4px;
@@ -83,6 +92,12 @@ body {
   color: var(--text-body);
   background: var(--bg-canvas);
   line-height: 1.6;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 a {

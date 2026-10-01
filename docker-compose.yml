@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: mindloom
+      POSTGRES_USER: mindloom
+      POSTGRES_PASSWORD: mindloom
+    ports:
+      - "5432:5432"
+    volumes:
+      - mindloom_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mindloom -d mindloom"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mindloom_postgres_data:

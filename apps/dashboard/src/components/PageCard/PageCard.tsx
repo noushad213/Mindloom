@@ -3,6 +3,7 @@ import styles from "./PageCard.module.css";
 
 interface PageCardProps {
   page: SavedPage;
+  onClick?: () => void;
 }
 
 function formatTimeAgo(isoDate: string): string {
@@ -39,12 +40,24 @@ const PILL_LABEL: Record<string, string> = {
   processing_failed: "Processing failed",
 };
 
-export function PageCard({ page }: PageCardProps) {
+export function PageCard({ page, onClick }: PageCardProps) {
   const firstLetter = page.sourceDomain.charAt(0).toUpperCase();
   const faviconUrl = `https://www.google.com/s2/favicons?domain=${page.sourceDomain}&sz=32`;
 
   return (
-    <article className={styles.card} tabIndex={0} role="button" aria-label={`View ${page.title}`}>
+    <article
+      className={styles.card}
+      tabIndex={0}
+      role="button"
+      aria-label={`View ${page.title}`}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+    >
       {/* Favicon */}
       <div className={styles.favicon}>
         <img

@@ -1,5 +1,16 @@
 {
   "name": "mindloom",
   "private": true,
-  "description": "Visual research workspace — browser tab collection and knowledge graph"
+  "description": "Visual research workspace — browser tab collection and knowledge graph",
+  "scripts": {
+    "dev": "pnpm --filter @mindloom/dashboard dev",
+    "dev:dashboard": "pnpm --filter @mindloom/dashboard dev",
+    "dev:backend": "python -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "build": "pnpm --filter @mindloom/dashboard build",
+    "lint": "pnpm --filter @mindloom/dashboard lint",
+    "test": "pnpm --filter @mindloom/dashboard test",
+    "test:backend": "python -m pytest"
+  }
 }

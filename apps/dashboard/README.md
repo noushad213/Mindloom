@@ -2,6 +2,19 @@
 
 The dashboard now uses the FastAPI service and the Chrome extension instead of fixture data.
 
+## Dashboard-only fixture mode
+
+To design the dashboard without PostgreSQL, FastAPI, or the Chrome extension, create
+`.env.local` in this directory with:
+
+```env
+VITE_USE_FIXTURES=true
+```
+
+Then run `pnpm dev:dashboard` from the repository root. Fixture mode supplies local
+sample workspaces, saved pages, and collection errors. Restart Vite after changing
+the environment file. Tracking still requires the Chrome extension.
+
 1. Copy `.env.example` to `.env.local`.
 2. Load `apps/extension` as an unpacked Chrome extension.
 3. Put the locally assigned extension ID in `VITE_EXTENSION_ID`.

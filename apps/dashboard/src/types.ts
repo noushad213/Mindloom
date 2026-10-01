@@ -87,3 +87,47 @@ export type TrackingState =
   | "active"
   | "stopping"
   | "unavailable";
+
+// ─── Navigation views ────────────────────────────────────────────
+
+export type DashboardView = "collection" | "graph" | "search" | "export";
+
+// ─── Graph models ────────────────────────────────────────────────
+
+export type EdgeType =
+  | "related_to"
+  | "source_of"
+  | "answers"
+  | "supports"
+  | "references"
+  | "navigated_to"
+  | "duplicate_of"
+  | "custom";
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: EdgeType;
+  label: string | null;
+  origin: "manual" | "suggested";
+  status: "suggested" | "accepted" | "rejected";
+  confidence?: number | null;
+  evidence?: string | null;
+  updatedAt?: string;
+}
+
+export interface GraphPage extends SavedPage {
+  pos?: { x: number; y: number } | null;
+  summary?: string | null;
+  importance?: number | null;
+  tabOpen?: boolean;
+  group_ids?: string[];
+}
+
+export interface GraphSnapshot {
+  workspace: Workspace;
+  pages: GraphPage[];
+  edges: GraphEdge[];
+  seq?: number;
+}

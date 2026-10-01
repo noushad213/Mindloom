@@ -1,134 +1,25 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Workspace } from "../../types";
 import styles from "./Sidebar.module.css";
 
-interface SidebarProps {
-  workspaces: Workspace[];
-  activeWorkspace: Workspace;
-  onWorkspaceChange: (ws: Workspace) => void;
-}
-
-export function Sidebar({
-  workspaces,
-  activeWorkspace,
-  onWorkspaceChange,
-}: SidebarProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  return (
-    <aside className={styles.sidebar}>
-      {/* Brand */}
-      <div className={styles.brand}>
-        <svg
-          className={styles.brandIcon}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 3c-1.2 2-3 4-5 5 1 4 2.5 8 5 13 2.5-5 4-9 5-13-2-1-3.8-3-5-5z" />
-          <path d="M12 8c0 3 0 6 0 9" />
-        </svg>
-        <span className={styles.brandName}>Mindloom</span>
-      </div>
-
-      {/* Workspace selector */}
-      <div className={styles.workspaceSelector} ref={dropdownRef}>
-        <button
-          className={styles.workspaceTrigger}
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          aria-expanded={dropdownOpen}
-          aria-haspopup="listbox"
-        >
-          <span>{activeWorkspace.name}</span>
-          <svg viewBox="0 0 16 16" fill="currentColor">
-            <path d="M4.5 6L8 9.5L11.5 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <span className={styles.workspaceCount}>
-          {workspaces.length} workspace{workspaces.length !== 1 ? "s" : ""}
-        </span>
-        {dropdownOpen && (
-          <div className={styles.workspaceDropdown} role="listbox">
-            {workspaces.map((ws) => (
-              <button
-                key={ws.id}
-                role="option"
-                aria-selected={ws.id === activeWorkspace.id}
-                className={`${styles.workspaceOption} ${ws.id === activeWorkspace.id ? styles.workspaceOptionActive : ""}`}
-                onClick={() => {
-                  onWorkspaceChange(ws);
-                  setDropdownOpen(false);
-                }}
-              >
-                {ws.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav className={styles.nav}>
-        <button className={`${styles.navItem} ${styles.navItemActive}`}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
-          Collection
-        </button>
-        <button className={styles.navItem}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="6" cy="6" r="3" />
-            <circle cx="18" cy="18" r="3" />
-            <path d="M8.5 8.5L15.5 15.5" />
-          </svg>
-          Graph View
-        </button>
-        <button className={styles.navItem}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          Search
-        </button>
-        <button className={styles.navItem}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          Export
-        </button>
-      </nav>
-
-      {/* Footer */}
-      <div className={styles.footer}>
-        <div className={styles.avatar}>N</div>
-        <button className={styles.settingsBtn} aria-label="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-          </svg>
-        </button>
-      </div>
-    </aside>
-  );
+export type AppView = "overview" | "graph" | "library" | "search" | "notes" | "export";
+interface Props { workspaces: Workspace[]; activeWorkspace: Workspace; onWorkspaceChange: (workspace: Workspace) => void; activeView: AppView; onViewChange: (view: AppView) => void; }
+const items: { view: AppView; label: string; icon: ReactNode }[] = [
+  { view: "overview", label: "Overview", icon: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></> },
+  { view: "graph", label: "Knowledge graph", icon: <><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="m8 8 8 7M18 6l-5 4"/><circle cx="18" cy="5" r="2"/></> },
+  { view: "library", label: "Source library", icon: <><path d="M5 4h14v16H5z"/><path d="M9 4v16M12 8h4M12 12h4"/></> },
+  { view: "search", label: "Search", icon: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></> },
+  { view: "notes", label: "Notes", icon: <><path d="M5 3h14v18H5z"/><path d="M9 8h6M9 12h6M9 16h4"/></> },
+  { view: "export", label: "Share & export", icon: <><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v8h14v-8"/></> },
+];
+export function Sidebar({ workspaces, activeWorkspace, onWorkspaceChange, activeView, onViewChange }: Props) {
+  const [open, setOpen] = useState(false); const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }; document.addEventListener("mousedown", close); return () => document.removeEventListener("mousedown", close); }, []);
+  return <aside className={styles.sidebar}>
+    <div className={styles.brand}><span className={styles.logo}><i/><i/><i/></span><span>Mindloom</span></div>
+    <div className={styles.workspace} ref={ref}><span className={styles.sectionLabel}>Current workspace</span><button className={styles.workspaceButton} onClick={() => setOpen(!open)} aria-expanded={open}><span className={styles.workspaceGlyph}>ML</span><span><strong>{activeWorkspace.name}</strong><small>{workspaces.length} workspaces</small></span><svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg></button>{open && <div className={styles.menu}>{workspaces.map((ws) => <button key={ws.id} onClick={() => { onWorkspaceChange(ws); setOpen(false); }} aria-current={ws.id === activeWorkspace.id}>{ws.name}</button>)}</div>}</div>
+    <nav className={styles.nav} aria-label="Workspace navigation"><span className={styles.sectionLabel}>Explore</span>{items.slice(0,4).map((item) => <button key={item.view} className={activeView === item.view ? styles.active : ""} onClick={() => onViewChange(item.view)} aria-current={activeView === item.view ? "page" : undefined}><svg viewBox="0 0 24 24">{item.icon}</svg>{item.label}{item.view === "graph" && <span className={styles.badge}>8</span>}</button>)}<span className={styles.sectionLabel}>Work with</span>{items.slice(4).map((item) => <button key={item.view} className={activeView === item.view ? styles.active : ""} onClick={() => onViewChange(item.view)} aria-current={activeView === item.view ? "page" : undefined}><svg viewBox="0 0 24 24">{item.icon}</svg>{item.label}</button>)}</nav>
+    <div className={styles.captureCard}><span>Browser collector</span><strong>Ready when you are</strong><p>Capture eligible tabs into this workspace.</p><div><i/> Extension connected</div></div>
+    <footer><span className={styles.avatar}>N</span><span><strong>Noushad</strong><small>Frontend lead</small></span><button aria-label="Open settings">•••</button></footer>
+  </aside>;
 }
