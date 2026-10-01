@@ -26,7 +26,8 @@ function formatTab(tab) {
     id: tab.id,
     title: tab.title || "Untitled tab",
     url: tab.url || "",
-    active: tab.active
+    active: tab.active,
+    status: tab.status
   };
 }
 
@@ -217,7 +218,12 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     return;
   }
 
-  if (changeInfo.url || changeInfo.title) {
+  if (changeInfo.status === "complete") {
+    sendToWebsites({
+      action: "TAB_READY",
+      tab: formatTab(tab)
+    });
+  } else if (changeInfo.url || changeInfo.title) {
     sendToWebsites({
       action: "TAB_UPDATED",
       tab: formatTab(tab)

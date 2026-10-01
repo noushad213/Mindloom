@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 54px);
+  padding: 16px 20px 20px;
   position: relative;
   background: var(--bg-canvas);
   overflow: hidden;
@@ -11,9 +12,13 @@
 .embedded {
   display: block;
   height: 100%;
+  padding: 0;
   min-height: 0;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--graph-canvas-border, #353e66);
   border-radius: var(--radius-md);
+  background: var(--graph-canvas-bg, #262d4e);
+  background-image: radial-gradient(circle at 1px 1px, var(--dot-color) 1px, transparent 1.2px);
+  background-size: 20px 20px;
 }
 
 .embedded .flowWrapper {
@@ -28,9 +33,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-default);
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   z-index: 5;
 }
 
@@ -78,8 +85,16 @@
 
 .toolBtn:hover {
   background: var(--bg-card-hover);
-  border-color: #ccc;
+  border-color: var(--text-tertiary);
   color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .container { height: calc(100vh - 118px); padding: 10px 12px 12px; }
+  .toolbar { padding: 10px 12px; }
+  .stats { display: none; }
+  .toolBtn { width: 34px; height: 34px; padding: 0; justify-content: center; font-size: 0; }
+  .emptyOverlay { width: calc(100% - 32px); padding: 24px; }
 }
 
 .flowWrapper {
@@ -89,6 +104,19 @@
   min-width: 1px;
   min-height: 1px;
   position: relative;
+  overflow: hidden;
+  background: var(--graph-canvas-bg, #262d4e);
+  background-image: radial-gradient(circle at 1px 1px, var(--dot-color) 1px, transparent 1.2px);
+  background-size: 20px 20px;
+  border: 1px solid var(--graph-canvas-border, #353e66);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--panel-shadow);
+}
+
+.embedded .flowWrapper {
+  border: 0;
+  border-radius: inherit;
+  box-shadow: none;
 }
 
 .emptyOverlay {

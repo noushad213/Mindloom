@@ -81,7 +81,10 @@ def clean_main_content(text: str) -> str:
     if not text:
         return ""
     text = text[:MAX_INPUT_CHARS]
-    # Strip HTML tags
+    # Remove non-content blocks before stripping tags so their source text cannot
+    # leak into summaries, keywords, or relationship evidence.
+    text = re.sub(r"<(script|style|noscript)\b[^>]*>.*?</\1\s*>", " ", text, flags=re.IGNORECASE | re.DOTALL)
+    # Strip remaining HTML tags.
     cleaned = re.sub(r"<[^>]+>", " ", text)
     # Strip URLs
     cleaned = re.sub(r"https?://\S+", " ", cleaned)

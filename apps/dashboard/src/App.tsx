@@ -8,6 +8,7 @@ import { Sidebar, type AppView } from "./components/Sidebar/Sidebar";
 import { CollectionLog } from "./components/CollectionLog/CollectionLog";
 import { GraphView } from "./components/GraphView/GraphView";
 import { PageDrawer } from "./components/PageDrawer/PageDrawer";
+import { LibraryView, NotesView, SearchView, ShareExportView } from "./components/WorkspaceTools/WorkspaceTools";
 import "./App.css";
 
 const EXTENSION_ID = import.meta.env.VITE_EXTENSION_ID || "";
@@ -92,6 +93,13 @@ const topics = [
 ];
 
 export default function App() {
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try {
+      const saved = localStorage.getItem("mindloom_theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {}
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(null);
   const [trackingState, setTrackingState] = useState<TrackingState>("paused");
@@ -104,8 +112,33 @@ export default function App() {
   const [activeView, setActiveView] = useState<AppView>("overview");
   const [query, setQuery] = useState("");
   const [selectedPage, setSelectedPage] = useState<GraphPage | SavedPage | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("mindloom_sidebar_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("mindloom_sidebar_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   const connectionRef = useRef<ExtensionConnection | null>(null);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    try {
+      localStorage.setItem("mindloom_theme", theme);
+    } catch {}
+  }, [theme]);
 
   const refreshWorkspace = useCallback(async (workspace: Workspace) => {
     setLoading(true);
@@ -149,16 +182,20 @@ export default function App() {
       if (!activeWorkspace) return;
       for (const result of results) {
         if (!result.success) {
-          setCollectionEvents((e) => [failureEvent(result), ...e]);
+          setCollectionEvents((events) => [
+            failureEvent(result),
+            ...events.filter((event) => event.tabId !== result.tabId),
+          ]);
           continue;
         }
         try {
           const page = await ingestExtraction(activeWorkspace.id, result);
           setSavedPages((pages) => [page, ...pages.filter((p) => p.id !== page.id)]);
+          setCollectionEvents((events) => events.filter((event) => event.tabId !== result.tabId));
         } catch (error) {
-          setCollectionEvents((e) => [
+          setCollectionEvents((events) => [
             failureEvent(result, error instanceof Error ? error.message : "The API rejected this page."),
-            ...e,
+            ...events.filter((event) => event.tabId !== result.tabId),
           ]);
         }
       }
@@ -191,6 +228,16 @@ export default function App() {
     setTrackingState("paused");
   }, []);
 
+  const handleRetryCapture = useCallback((eventId: string) => {
+    const event = collectionEvents.find((item) => item.eventId === eventId);
+    if (!event) return;
+    if (connectionRef.current) {
+      connectionRef.current.retry(event.tabId);
+      return;
+    }
+    handleStartTracking();
+  }, [collectionEvents, handleStartTracking]);
+
   const selectWorkspace = useCallback(
     (workspace: Workspace) => {
       setActiveWorkspace(workspace);
@@ -209,7 +256,6 @@ export default function App() {
 
   const ready = savedPages.filter((p) => ["captured", "ready", "extracted"].includes(p.status)).length;
   const processing = savedPages.filter((p) => ["processing", "queued", "extracting"].includes(p.status)).length;
-  const errors = collectionEvents.filter((e) => e.status === "failed").length;
 
   if (!activeWorkspace) {
     return (
@@ -232,16 +278,19 @@ export default function App() {
   };
 
   return (
-    <div className="appShell">
+    <div className={`appShell ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <Sidebar
         workspaces={workspaces}
         activeWorkspace={activeWorkspace}
         onWorkspaceChange={selectWorkspace}
         activeView={activeView}
         onViewChange={setActiveView}
+        trackingState={trackingState}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
-      <main className="main">
-        <header className="topbar">
+      <main className={`main ${activeView === "graph" ? "mainGraphView" : ""}`}>
+        {activeView !== "graph" && <header className="topbar">
           <div className="topbarBrand">
             <span className="topbarLogo"><i/><i/><i/></span>
             <span>MindLoom</span>
@@ -257,6 +306,20 @@ export default function App() {
             <kbd>⌘ K</kbd>
           </label>
           <div className="topActions">
+            <button
+              className="themeButton"
+              onClick={() => setTheme((value) => (value === "light" ? "dark" : "light"))}
+              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+              title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                {theme === "light" ? (
+                  <><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.8 6.8 0 0 0 9.8 9.8Z" /></>
+                ) : (
+                  <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
+                )}
+              </svg>
+            </button>
             <div className={`trackingBadge state-${trackingState}`}>
               <span />
               {trackingState === "active"
@@ -274,7 +337,7 @@ export default function App() {
               {trackingState === "active" ? "Stop" : "Collect tabs"}
             </button>
           </div>
-        </header>
+        </header>}
 
         {loadError && (
           <div className="notice" role="alert">
@@ -291,15 +354,15 @@ export default function App() {
           />
         ) : activeView === "overview" ? (
           <div className="dashboardGrid">
-            {/* ─── Graph — full top row ─── */}
+            {/* ─── Top-left: Research graph preview ─── */}
             <section className="panel weavePanel">
               <div className="panelHeader">
                 <div>
-                  <span className="eyebrow">Knowledge canvas</span>
+                  <span className="eyebrow">{activeWorkspace.name}</span>
                   <h2>Research graph</h2>
                 </div>
                 <button className="textButton" onClick={() => setActiveView("graph")}>
-                  Open full graph <Icon name="arrow" size={15} />
+                  Expand <Icon name="arrow" size={15} />
                 </button>
               </div>
               <div className="graphContainer">
@@ -312,46 +375,36 @@ export default function App() {
               </div>
             </section>
 
-            {/* ─── Bottom-left: captured logs + recent captures ─── */}
-            <div className="bottomLeft">
-              <section className="panel logCard" aria-label="Collection summary">
-                <div className="logIcon">
-                  <Icon name="link" size={18} />
-                </div>
-                <div className="logInfo">
-                  <strong>Captured logs</strong>
-                  <span>{activeWorkspace.name} workspace</span>
-                </div>
-                <div className="logStatRow">
-                  <div className="logStat tealDot">
-                    <strong>{ready || 24}</strong>
-                    <span>ready</span>
-                  </div>
-                  <div className="logStat amberDot">
-                    <strong>{processing || 2}</strong>
-                    <span>processing</span>
-                  </div>
-                  {errors > 0 && (
-                    <div className="logStat redDot">
-                      <strong>{errors}</strong>
-                      <span>failed</span>
-                    </div>
-                  )}
-                </div>
-              </section>
+            {/* ─── Top-right: Collection log (side-by-side with graph) ─── */}
+            <section className="panel collectionLogPanel">
+              <CollectionLog
+                events={collectionEvents}
+                pages={savedPages}
+                readyCount={ready}
+                processingCount={processing}
+                trackingState={trackingState}
+                onDismiss={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
+                onRetry={handleRetryCapture}
+                onClearAll={() => setCollectionEvents([])}
+                onStartTracking={handleStartTracking}
+                onSelectPage={(page) => setSelectedPage(page)}
+              />
+            </section>
 
-              <section className="panel recentPanel">
-                <div className="panelHeader">
-                  <div>
-                    <span className="eyebrow">Recent captures</span>
-                    <h2>Latest sources</h2>
-                  </div>
-                  <button className="textButton" onClick={() => setActiveView("library")}>
-                    View all <Icon name="arrow" size={15} />
-                  </button>
+            {/* ─── Bottom-left: Recent sources ─── */}
+            <section className="panel recentPanel">
+              <div className="panelHeader">
+                <div>
+                  <span className="eyebrow">Recent</span>
+                  <h2>Sources</h2>
                 </div>
+                <button className="textButton" onClick={() => setActiveView("library")}>
+                  View all <Icon name="arrow" size={15} />
+                </button>
+              </div>
+              <div className="sourceTableWrapper">
                 <div className="sourceTable" role="table" aria-label="Recent saved sources">
-                  {visiblePages.slice(0, 4).map((p, i) => (
+                  {visiblePages.slice(0, 5).map((p, i) => (
                     <button
                       className="sourceRow"
                       role="row"
@@ -374,15 +427,15 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-              </section>
-            </div>
+              </div>
+            </section>
 
             {/* ─── Bottom-right: Today's focus ─── */}
             <aside className="panel focusPanel">
               <div className="panelHeader">
                 <div>
-                  <span className="eyebrow">Today's focus</span>
-                  <h2>Keep the thread moving</h2>
+                  <span className="eyebrow">Today</span>
+                  <h2>Focus</h2>
                 </div>
               </div>
               <div className="focusStat">
@@ -390,8 +443,8 @@ export default function App() {
                   <span>68%</span>
                 </div>
                 <div>
-                  <strong>Workspace reviewed</strong>
-                  <p>9 relationships remain before this map is tidy.</p>
+                  <strong>Reviewed</strong>
+                  <p>9 links remain</p>
                 </div>
               </div>
               <div className="taskList">
@@ -415,8 +468,8 @@ export default function App() {
               <div style={{ marginTop: 12 }}>
                 <div className="panelHeader">
                   <div>
-                    <span className="eyebrow">Topic map</span>
-                    <h2>Active topics</h2>
+                    <span className="eyebrow">Map</span>
+                    <h2>Topics</h2>
                   </div>
                 </div>
                 <div className="topicList">
@@ -434,18 +487,15 @@ export default function App() {
                 </div>
               </div>
             </aside>
-
-            {errors > 0 && (
-              <section className="panel logPanel">
-                <CollectionLog
-                  events={collectionEvents}
-                  onDismiss={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
-                  onRetry={(id) => setCollectionEvents((e) => e.filter((x) => x.eventId !== id))}
-                  onClearAll={() => setCollectionEvents([])}
-                />
-              </section>
-            )}
           </div>
+        ) : activeView === "notes" ? (
+          <NotesView workspace={activeWorkspace} />
+        ) : activeView === "export" ? (
+          <ShareExportView workspace={activeWorkspace} />
+        ) : activeView === "library" ? (
+          <LibraryView workspace={activeWorkspace} />
+        ) : activeView === "search" ? (
+          <SearchView workspace={activeWorkspace} />
         ) : (
           <section className="futureView">
             <div className="futureIcon">

@@ -4,69 +4,136 @@
  * ============================================================ */
 
 :root {
-  /* Mindloom dashboard palette */
-  --navy: #252c48;
-  --navy-soft: #303854;
-  --teal: #0f6170;
-  --teal-bright: #1a7b83;
-  --amber: #f2b957;
-  --mint: #73c4ad;
-  --workspace: #dfe8ed;
+  /* ─── Brand palette ─── */
+  --navy:        #1e2540;
+  --navy-soft:   #2a3155;
+  --teal:        #0d7377;
+  --teal-bright: #11918a;
+  --amber:       #e5a630;
+  --amber-soft:  #f5dfa8;
+  --mint:        #5bb89e;
 
-  /* Canvas */
-  --bg-canvas: #e7eef2;
-  --bg-surface: #f8fbfc;
-  --bg-card: #ffffff;
-  --bg-card-hover: #fafaf8;
+  /* ─── Sidebar ─── */
+  --sidebar-bg:         var(--navy);
+  --sidebar-header-bg:  #262d4e;
+  --sidebar-header-border: #353e66;
+  --sidebar-text:       #d0d5e0;
+  --sidebar-text-dim:   #7f879d;
+  --sidebar-active-bg:  var(--bg-canvas);
+  --sidebar-active-text:#1e2540;
+  --sidebar-active-icon: var(--teal);
+  --sidebar-active-shadow: inset 3px 0 0 var(--teal);
+  --sidebar-card-bg:    #222842;
+  --sidebar-card-border:#384163;
+  --sidebar-hover:      #2d3557;
 
-  /* Text */
-  --text-primary: #20263c;
-  --text-body: #343b4d;
-  --text-secondary: #687282;
-  --text-tertiary: #929cab;
+  /* ─── Graph Canvas ─── */
+  --graph-canvas-bg:    #262d4e;
+  --graph-canvas-border:#353e66;
 
-  /* Borders */
-  --border-default: #dce3e7;
-  --border-subtle: rgba(32, 38, 60, 0.08);
+  /* ─── Canvas tiers ─── */
+  --bg-canvas:  #f0f2f5;
+  --bg-surface: #f8f9fb;
+  --bg-card:    #ffffff;
+  --graph-panel-bg: #e8efea;
+  --bg-card-hover: #fafafa;
 
-  /* Status — pale background + dark text pairings */
-  --status-captured-bg: #edf3ec;
-  --status-captured-text: #346538;
-  --status-processing-bg: #fbf3db;
-  --status-processing-text: #956400;
-  --status-error-bg: #fdebec;
-  --status-error-text: #9f2f2d;
-  --status-queued-bg: #f7f6f3;
-  --status-queued-text: #787774;
+  /* ─── Text hierarchy ─── */
+  --text-primary:   #1a1f33;
+  --text-body:      #2e3447;
+  --text-secondary: #5c6478;
+  --text-tertiary:  #8d95a6;
 
-  /* Tracking state dots */
-  --tracking-active: #346538;
-  --tracking-starting: #956400;
-  --tracking-paused: #787774;
-  --tracking-unavailable: #9f2f2d;
+  /* ─── Borders ─── */
+  --border-default: #d8dde5;
+  --border-subtle:  rgba(30, 37, 64, 0.07);
 
-  /* Interactive */
+  /* ─── Status chips — pale bg + dark text pairings ─── */
+  --status-captured-bg:    #e6f4e8;
+  --status-captured-text:  #276a2e;
+  --status-processing-bg:  #fef5da;
+  --status-processing-text:#8a5700;
+  --status-error-bg:       #fde8e9;
+  --status-error-text:     #a62d2b;
+  --status-queued-bg:      #f2f1ee;
+  --status-queued-text:    #6b6a66;
+
+  /* ─── Tracking state dots ─── */
+  --tracking-active:      #276a2e;
+  --tracking-starting:    #8a5700;
+  --tracking-paused:      #6b6a66;
+  --tracking-unavailable: #a62d2b;
+
+  /* ─── Interactive ─── */
   --accent-primary: var(--teal);
-  --accent-hover: #0b5360;
+  --accent-hover:   #0a5e62;
 
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  /* ─── Spacing scale ─── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
   --space-2xl: 48px;
 
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* ─── Radius ─── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 
-  /* Typography */
+  /* ─── Typography ─── */
   --font-display: "Newsreader", "Instrument Serif", "Georgia", serif;
   --font-body: -apple-system, "BlinkMacSystemFont", "SF Pro Display",
     "Helvetica Neue", system-ui, sans-serif;
   --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
+  --topbar-bg: rgba(255, 255, 255, 0.86);
+  --panel-shadow: 0 1px 2px rgba(30, 37, 64, 0.04), 0 12px 30px rgba(30, 37, 64, 0.035);
+  --edge-blue: #4d78d7;
+  --edge-green: #35a277;
+  --edge-amber: #d99024;
+  --edge-coral: #da6864;
+  --dot-color: rgba(30, 37, 64, 0.12);
+}
+
+:root[data-theme="dark"] {
+  --navy: #111727;
+  --navy-soft: #1a2236;
+  --sidebar-bg: #141b2b;
+  --sidebar-header-bg: #1a2336;
+  --sidebar-header-border: #26334d;
+  --sidebar-text: #d4daf0;
+  --sidebar-text-dim: #7f8ba6;
+  --sidebar-active-bg: var(--bg-canvas);
+  --sidebar-active-text: #ffffff;
+  --sidebar-active-icon: #2dd4bf;
+  --sidebar-active-shadow: inset 3px 0 0 #2dd4bf;
+  --sidebar-card-bg: #172133;
+  --sidebar-card-border: #27344f;
+  --sidebar-hover: #1e293f;
+  --graph-canvas-bg: #111828;
+  --graph-canvas-border: #26334c;
+  --bg-canvas: #0a0e17;
+  --bg-surface: #121826;
+  --bg-card: #151d2e;
+  --graph-panel-bg: #132226;
+  --bg-card-hover: #1c263b;
+  --text-primary: #f2f4f8;
+  --text-body: #d7dce7;
+  --text-secondary: #a7b0c3;
+  --text-tertiary: #778299;
+  --border-default: #243046;
+  --border-subtle: rgba(220, 228, 241, 0.07);
+  --topbar-bg: rgba(10, 14, 23, 0.88);
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 36px rgba(0, 0, 0, 0.2);
+  --status-captured-bg: #173a32;
+  --status-captured-text: #8ed8bb;
+  --status-processing-bg: #3b301b;
+  --status-processing-text: #f0c66b;
+  --status-error-bg: #422527;
+  --status-error-text: #f3a2a1;
+  --status-queued-bg: #272f3d;
+  --status-queued-text: #bcc4d2;
+  --dot-color: rgba(209, 219, 235, 0.14);
 }
 
 /* ============================================================
@@ -82,7 +149,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -91,7 +158,7 @@ body {
   font-family: var(--font-body);
   color: var(--text-body);
   background: var(--bg-canvas);
-  line-height: 1.6;
+  line-height: 1.55;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -139,7 +206,7 @@ ol {
  * ============================================================ */
 
 :focus-visible {
-  outline: 2px solid var(--tracking-active);
+  outline: 2px solid var(--teal);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

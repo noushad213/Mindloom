@@ -1,40 +1,622 @@
-.sidebar { position: fixed; inset: 0 auto 0 0; width: 264px; padding: 25px 18px 18px; background: var(--navy); color: #eef2f5; display: flex; flex-direction: column; z-index: 10; }
-.brand { height: 42px; display: flex; align-items: center; gap: 11px; margin: 0 7px 26px; font: 650 22px var(--font-display); letter-spacing: -.025em; }
-.logo { width: 25px; height: 27px; position: relative; display: block; }
-.logo i { position: absolute; width: 8px; height: 24px; top: 1px; border: 1.5px solid var(--amber); border-radius: 70% 20% 70% 20%; transform: rotate(-25deg); }
-.logo i:nth-child(2) { left: 8px; transform: rotate(0); border-color: var(--mint); }
-.logo i:nth-child(3) { left: 15px; transform: rotate(25deg); border-color: #9ecbd3; }
-.sectionLabel { display: block; margin: 0 9px 7px; font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .13em; color: #8991a4; }
-.workspace { position: relative; margin-bottom: 23px; }
-.workspaceButton { width: 100%; display: grid; grid-template-columns: 35px 1fr 16px; align-items: center; gap: 10px; padding: 9px; background: #303751; border: 1px solid #3b435e; border-radius: 9px; text-align: left; color: white; }
-.workspaceGlyph { width: 34px; height: 34px; display: grid; place-items: center; background: var(--teal); border-radius: 7px; font-size: 10px; font-weight: 800; }
-.workspaceButton strong, .workspaceButton small { display: block; }
-.workspaceButton strong { font-size: 11px; }
-.workspaceButton small { font-size: 9px; color: #aeb6c5; margin-top: 2px; }
-.workspaceButton svg { width: 14px; fill: none; stroke: #aeb6c5; stroke-width: 1.5; }
-.menu { position: absolute; top: 67px; left: 0; right: 0; background: #343c57; border: 1px solid #4b546f; border-radius: 8px; padding: 5px; box-shadow: 0 10px 24px #111526; z-index: 4; }
-.menu button { width: 100%; padding: 8px; text-align: left; color: #cdd3df; border-radius: 5px; font-size: 11px; }
-.menu button:hover, .menu button[aria-current="true"] { background: #48516c; color: white; }
-.nav { flex: 1; display: flex; flex-direction: column; gap: 3px; overflow: visible; }
-.nav .sectionLabel:not(:first-child) { margin-top: 20px; }
-.nav button { position: relative; width: 100%; min-height: 39px; padding: 0 10px; display: flex; align-items: center; gap: 11px; color: #b9c0ce; border-radius: 7px; text-align: left; font-size: 11px; font-weight: 600; }
-.nav button:hover { background: #2d344e; color: white; }
-.nav button.active { z-index: 1; width: calc(100% + 18px); margin-right: -18px; padding-left: 17px; background: var(--workspace); color: var(--text-primary); border-radius: 999px 0 0 999px; }
-.nav button.active:hover { background: var(--workspace); color: var(--text-primary); }
-.nav button.active svg { color: var(--teal); stroke-width: 2; }
-.nav svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.badge { margin-left: auto; margin-right: 18px; padding: 1px 6px; background: var(--amber); color: #3d2f16; border-radius: 9px; font-size: 8px; }
-.captureCard { margin: 12px 0 18px; padding: 14px; border: 1px solid #414a66; border-radius: 9px; background: #2c334c; }
-.captureCard > span { font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: #929caf; }
-.captureCard strong { display: block; font-size: 11px; margin-top: 5px; }
-.captureCard p { font-size: 9px; line-height: 1.45; color: #aeb6c5; margin: 3px 0 10px; }
-.captureCard div { font-size: 8px; color: #aeb6c5; display: flex; align-items: center; gap: 6px; }
-.captureCard div i { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
-.sidebar footer { padding-top: 15px; border-top: 1px solid #3a425c; display: grid; grid-template-columns: 34px 1fr 26px; align-items: center; gap: 9px; }
-.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--amber); color: #3b2d16; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
-.sidebar footer strong, .sidebar footer small { display: block; }
-.sidebar footer strong { font-size: 10px; }
-.sidebar footer small { font-size: 8px; color: #8f98ab; }
-.sidebar footer button { color: #8f98ab; letter-spacing: 2px; }
-@media (max-width: 1100px) { .sidebar { width: 224px; } .captureCard { display: none; } }
-@media (max-width: 720px) { .sidebar { right: 0; bottom: auto; width: auto; height: 64px; padding: 10px 14px; flex-direction: row; align-items: center; } .brand { margin: 0; } .workspace, .captureCard, .sidebar footer, .sectionLabel { display: none; } .nav { margin-left: auto; flex: none; flex-direction: row; overflow: hidden; } .nav button, .nav button.active { width: 38px; margin: 0; padding: 0; justify-content: center; border-radius: 7px; } .nav button:nth-of-type(n+4) { display: none; } .nav button { font-size: 0; } .nav .badge { display: none; } }
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 264px;
+  padding: 24px 16px 18px;
+  background: var(--navy);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  transition: width 0.25s cubic-bezier(0.2, 0, 0, 1), padding 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── Distinct Sidebar Header (#262d4e lighter slate-navy) ── */
+.sidebarHeader {
+  background: var(--sidebar-header-bg, #262d4e);
+  margin: -24px -16px 18px -16px;
+  padding: 20px 16px 18px;
+  border-bottom: 1px solid var(--sidebar-header-border, #353e66);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 14px rgba(10, 14, 30, 0.12);
+  transition: margin 0.25s ease, padding 0.25s ease;
+}
+
+.brand {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.brandMain {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brandTitle {
+  font: 650 21px var(--font-display);
+  letter-spacing: -.025em;
+  color: #ffffff;
+}
+
+.collapseToggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--sidebar-text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.collapseToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.04);
+}
+
+.collapseToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.logo {
+  width: 26px;
+  height: 28px;
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+}
+
+.logo i {
+  position: absolute;
+  width: 8px;
+  height: 24px;
+  top: 1px;
+  border: 1.6px solid var(--amber);
+  border-radius: 70% 20% 70% 20%;
+  transform: rotate(-25deg);
+}
+
+.logo i:nth-child(2) {
+  left: 8px;
+  transform: rotate(0);
+  border-color: var(--mint);
+}
+
+.logo i:nth-child(3) {
+  left: 15px;
+  transform: rotate(25deg);
+  border-color: #9ecbd3;
+}
+
+.sectionLabel {
+  display: block;
+  margin: 0 10px 8px;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--sidebar-text-dim);
+}
+
+.workspace {
+  position: relative;
+}
+
+.workspaceButton {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--sidebar-card-bg);
+  border: 1px solid var(--sidebar-card-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  color: white;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+
+.workspaceButton:hover {
+  background: var(--sidebar-hover);
+  border-color: #4a5275;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.workspaceGlyph {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: var(--teal);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.workspaceButton strong,
+.workspaceButton small {
+  display: block;
+}
+
+.workspaceButton strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.workspaceButton small {
+  font-size: 10px;
+  color: var(--sidebar-text-dim);
+  margin-top: 1px;
+}
+
+.workspaceButton svg {
+  width: 14px;
+  fill: none;
+  stroke: var(--sidebar-text-dim);
+  stroke-width: 1.5;
+}
+
+.collapsedWorkspaceBtn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--teal);
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.collapsedWorkspaceBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(13, 115, 119, 0.4);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--sidebar-card-bg);
+  border: 1px solid var(--sidebar-card-border);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 10px 24px rgba(10, 14, 30, .5);
+  z-index: 20;
+}
+
+.menuHeader {
+  display: block;
+  padding: 4px 8px 6px;
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--sidebar-text-dim);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 4px;
+}
+
+.menu button {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--sidebar-text);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  transition: background .12s, color .12s;
+}
+
+.menu button:hover,
+.menu button[aria-current="true"] {
+  background: var(--sidebar-hover);
+  color: white;
+}
+
+/* ── Navigation ── */
+.nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: visible;
+}
+
+.nav .sectionLabel:not(:first-child) {
+  margin-top: 20px;
+}
+
+.nav button {
+  position: relative;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--sidebar-text);
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 550;
+  transition: background .12s, color .12s;
+}
+
+.nav button:hover {
+  background: var(--sidebar-hover);
+  color: #ffffff;
+}
+
+/* ── Active Nav Item with Outer Concave Scoop (Screenshot 2) ── */
+.nav button.active {
+  z-index: 2;
+  position: relative;
+  width: calc(100% + 17px);
+  margin-right: -17px;
+  padding-left: 18px;
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  border-radius: 999px 2px 2px 999px;
+  font-weight: 650;
+  box-shadow: var(--sidebar-active-shadow, none);
+}
+
+.nav button.active:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+
+.nav button.active svg {
+  color: var(--sidebar-active-icon, var(--teal));
+  stroke-width: 2;
+}
+
+/* Concave outer rounded corner — top-right curve */
+.nav button.active::before {
+  content: "";
+  position: absolute;
+  top: -18px;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle at 0 0, transparent 17px, var(--sidebar-active-bg) 17.5px);
+  pointer-events: none;
+}
+
+/* Concave outer rounded corner — bottom-right curve */
+.nav button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -18px;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle at 0 100%, transparent 17px, var(--sidebar-active-bg) 17.5px);
+  pointer-events: none;
+}
+
+.nav svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.badge {
+  margin-left: auto;
+  margin-right: 18px;
+  padding: 2px 7px;
+  background: var(--amber);
+  color: #3d2f16;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.captureCard {
+  margin: 14px 0 18px;
+  padding: 16px;
+  border: 1px solid var(--sidebar-card-border);
+  border-radius: var(--radius-md);
+  background: var(--sidebar-card-bg);
+}
+
+.captureCard > span {
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--sidebar-text-dim);
+}
+
+.captureCard strong {
+  display: block;
+  font-size: 13px;
+  margin-top: 6px;
+  color: #ffffff;
+}
+
+.captureCard p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--sidebar-text);
+  margin: 4px 0 12px;
+}
+
+.captureCard div {
+  font-size: 10px;
+  color: var(--sidebar-text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.captureCard div i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint);
+}
+
+.sidebar footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--sidebar-card-border);
+  display: grid;
+  grid-template-columns: 34px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--amber);
+  color: #3b2d16;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.sidebar footer strong,
+.sidebar footer small {
+  display: block;
+}
+
+.sidebar footer strong {
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.sidebar footer small {
+  font-size: 10px;
+  color: var(--sidebar-text-dim);
+}
+
+.sidebar footer button {
+  color: var(--sidebar-text-dim);
+  letter-spacing: 2px;
+  transition: color .12s;
+}
+
+.sidebar footer button:hover {
+  color: #ffffff;
+}
+
+/* ============================================================
+ * Collapsed Sidebar (Icons-Only Mode)
+ * ============================================================ */
+.collapsed {
+  width: 68px;
+  padding: 18px 10px 16px;
+}
+
+.collapsed .sidebarHeader {
+  margin: -18px -10px 14px -10px;
+  padding: 16px 8px 14px;
+  align-items: center;
+  gap: 14px;
+}
+
+.collapsed .brand {
+  width: 100%;
+  justify-content: center;
+  position: relative;
+  height: auto;
+}
+
+.collapsed .brandMain {
+  gap: 0;
+}
+
+.collapsed .brandTitle {
+  display: none;
+}
+
+.collapsed .collapseToggle {
+  position: absolute;
+  right: -2px;
+  top: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
+  border: 2px solid var(--sidebar-header-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.collapsed .collapseToggle svg {
+  width: 12px;
+  height: 12px;
+}
+
+.collapsed .workspace {
+  margin-bottom: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.collapsed .menu {
+  position: fixed;
+  left: 74px;
+  top: 60px;
+  right: auto;
+  width: 210px;
+  box-shadow: 0 14px 32px rgba(10, 14, 30, 0.65);
+}
+
+.collapsed .navDivider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.09);
+  margin: 8px auto;
+  width: 36px;
+}
+
+.collapsed .nav {
+  align-items: center;
+  gap: 4px;
+}
+
+.collapsed .nav button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 10px;
+  margin: 0;
+  position: relative;
+}
+
+.collapsed .nav button.active {
+  width: 44px;
+  margin-right: 0;
+  padding-left: 0;
+  border-radius: 10px;
+  background: var(--teal);
+  color: #ffffff;
+}
+
+.collapsed .nav button.active svg {
+  color: #ffffff;
+}
+
+.collapsed .nav button.active::before,
+.collapsed .nav button.active::after {
+  display: none;
+}
+
+.collapsed .badgeDot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 2px var(--navy);
+}
+
+.collapsed .captureCard {
+  display: none;
+}
+
+.collapsed footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 12px;
+  grid-template-columns: none;
+}
+
+.collapsed footer span:not(.avatar),
+.collapsed footer button {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .sidebar:not(.collapsed) {
+    width: 224px;
+  }
+  .sidebar:not(.collapsed) .captureCard {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    width: auto !important;
+    height: 64px;
+    padding: 8px 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid var(--sidebar-header-border);
+    z-index: 30;
+  }
+  .sidebarHeader {
+    display: none;
+  }
+  .workspace,
+  .captureCard,
+  .sidebar footer,
+  .sectionLabel,
+  .navDivider {
+    display: none;
+  }
+  .nav {
+    width: 100%;
+    margin: 0;
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-around;
+    overflow: visible;
+  }
+  .nav button,
+  .nav button.active {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-content: center;
+    border-radius: 14px !important;
+  }
+  .nav button.active::before,
+  .nav button.active::after {
+    display: none !important;
+  }
+  .nav button:nth-of-type(n+5) {
+    display: none;
+  }
+  .nav .navLabel,
+  .nav .badge {
+    display: none;
+  }
+}

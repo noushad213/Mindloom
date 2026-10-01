@@ -29,6 +29,15 @@ interface GraphViewProps {
   embedded?: boolean;
 }
 
+const RELATIONSHIP_COLORS = ["var(--edge-blue)", "var(--edge-green)", "var(--edge-amber)", "var(--edge-coral)"];
+
+function edgeColor(edge: Pick<GraphEdge, "type" | "origin">) {
+  if (edge.origin === "suggested") return "var(--text-tertiary)";
+  const key = edge.type || "related_to";
+  const total = [...key].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return RELATIONSHIP_COLORS[total % RELATIONSHIP_COLORS.length];
+}
+
 function calculatePositions(pages: GraphPage[]): Array<{ x: number; y: number }> {
   const total = pages.length;
   if (total === 0) return [];
@@ -98,12 +107,13 @@ export function GraphView({
         data: {
           ...edge,
           onDeleteEdge: handleDeleteEdge,
+          color: edgeColor(edge),
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 14,
           height: 14,
-          color: edge.origin === "suggested" ? "#a8a5a0" : "#787774",
+          color: edgeColor(edge),
         },
       }));
 
@@ -142,12 +152,13 @@ export function GraphView({
           data: {
             ...edge,
             onDeleteEdge: handleDeleteEdge,
+            color: edgeColor(edge),
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 14,
             height: 14,
-            color: edge.origin === "suggested" ? "#a8a5a0" : "#787774",
+            color: edgeColor(edge),
           },
         }));
 
@@ -187,12 +198,13 @@ export function GraphView({
           data: {
             ...newEdge,
             onDeleteEdge: handleDeleteEdge,
+            color: edgeColor(newEdge),
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 14,
             height: 14,
-            color: "#787774",
+            color: edgeColor(newEdge),
           },
         };
 
@@ -259,7 +271,7 @@ export function GraphView({
               <path d="M12 3v18" />
               <path d="M3 12h18" />
             </svg>
-            Auto Arrange
+            Arrange
           </button>
           <button className={styles.toolBtn} onClick={() => void loadGraph()} title="Refresh graph snapshot">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -312,14 +324,14 @@ export function GraphView({
           fitView
           attributionPosition="bottom-right"
         >
-          <Background color="#dcdbd8" gap={20} size={1} />
+          <Background color="var(--dot-color)" gap={20} size={1.25} />
           <Controls showInteractive={false} />
           <MiniMap
-            nodeColor="#eaeaea"
-            maskColor="rgba(247, 246, 243, 0.7)"
+            nodeColor="var(--text-tertiary)"
+            maskColor="color-mix(in srgb, var(--graph-canvas-bg) 76%, transparent)"
             style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-default)",
+              background: "var(--graph-canvas-bg)",
+              border: "1px solid var(--graph-canvas-border)",
               borderRadius: "var(--radius-md)",
             }}
           />

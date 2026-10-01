@@ -5,6 +5,7 @@ import styles from "./CustomEdge.module.css";
 
 export type CustomEdgeData = GraphEdge & {
   onDeleteEdge?: (edgeId: string) => void;
+  color?: string;
 };
 
 export function CustomEdge({
@@ -38,8 +39,8 @@ export function CustomEdge({
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          stroke: isSuggested ? "#a8a5a0" : "#787774",
-          strokeWidth: 1.5,
+          stroke: edgeData?.color || (isSuggested ? "var(--text-tertiary)" : "var(--edge-blue)"),
+          strokeWidth: 1.8,
           strokeDasharray: isSuggested ? "5,5" : undefined,
         }}
       />
